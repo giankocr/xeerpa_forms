@@ -1,0 +1,19 @@
+0000000000000000000000000000000000000000 82df813e2a9098c1a9ecc0eb2425fa7c4fef9ebe Giancarlos Villalobos <gian@gianko.com> 1722390681 -0600	commit (initial): initial commit
+82df813e2a9098c1a9ecc0eb2425fa7c4fef9ebe d84cd7963c46921b56bfa09328fd119e8fdeadce Giancarlos Villalobos <gian@gianko.com> 1722569108 -0600	commit: nueva version
+d84cd7963c46921b56bfa09328fd119e8fdeadce 002a8787b1c477753f0674eb81e1ca059ed64dc0 Giancarlos Villalobos <gian@gianko.com> 1724690978 -0500	commit: fix TikTok Login y registro
+002a8787b1c477753f0674eb81e1ca059ed64dc0 77d667c43e51475bc811cf574d6c01b16f8527eb Giancarlos Villalobos <gian@gianko.com> 1726087751 -0600	commit: ajustes varios
+77d667c43e51475bc811cf574d6c01b16f8527eb 8e3e3f2369013a6895faa2f4b8da3289d8b46d2b Giancarlos Villalobos <gian@gianko.com> 1726816965 -0600	commit: se agregan ajustes de tiktok y ajustes al recomendador.
+8e3e3f2369013a6895faa2f4b8da3289d8b46d2b 92f8cc19fd85d7d045a7c5f03f7c2dd54ef5bd90 Giancarlos Villalobos <gian@gianko.com> 1729220791 -0600	commit: ajustes en textos de login, funcion de logout, ajuste en cookies de parte de Xeerpa. Cambio de version.
+92f8cc19fd85d7d045a7c5f03f7c2dd54ef5bd90 4d4f268f8a0ee45e36431977b4dfd355b53dce06 Giancarlos Villalobos <gian@gianko.com> 1729532349 -0600	commit: Ajuste en JS para ejecutar script de respuesta xeerpa
+4d4f268f8a0ee45e36431977b4dfd355b53dce06 608afd4280ffaccb7e1cd2322484ccf322493ffa Giancarlos Villalobos <gian@gianko.com> 1729545630 -0600	commit: ajustes al recomendador funcional 100%
+608afd4280ffaccb7e1cd2322484ccf322493ffa b447ac06441ad402fa1e02e2cf4f0d561297ac15 Giancarlos Villalobos <gian@gianko.com> 1729548347 -0600	commit: ajustando ancho de recomendador y lint al codigo
+b447ac06441ad402fa1e02e2cf4f0d561297ac15 1639c8d00053dd1af11617eaa6e9af6dd3f322cc Giancarlos Villalobos <gian@gianko.com> 1732027516 -0600	commit: Ajustes de seguridad en headers
+1639c8d00053dd1af11617eaa6e9af6dd3f322cc a7547600c2abfe33fca46adbfc94599d18c3d47b Giancarlos Villalobos <gian@gianko.com> 1732677670 -0600	commit: aplicacndo fix de seguridad
+a7547600c2abfe33fca46adbfc94599d18c3d47b 64738f616a2c3563ff6da973f64278416b6cdcc0 Giancarlos Villalobos <gian@gianko.com> 1732822969 -0600	commit: ajustes a xeerpa solucion error facebook - google blocked
+64738f616a2c3563ff6da973f64278416b6cdcc0 d5c033bb02086921bc1b4c3bbc424241d4784fb9 Giancarlos Villalobos <gian@gianko.com> 1732822991 -0600	commit: ajustes a xeerpa solucion error facebook - google blocked
+d5c033bb02086921bc1b4c3bbc424241d4784fb9 b18432bb2cacdd1e3f559f1eb75124bdb504cbaa Giancarlos Villalobos <gian@gianko.com> 1732832851 -0600	commit: ajustes al codigo antiguo
+b18432bb2cacdd1e3f559f1eb75124bdb504cbaa 12fae55afd2b8c74985510c4887389e884f23330 Giancarlos Villalobos <gian@gianko.com> 1732900158 -0600	commit: agregando icono del ojo a campo contraseña del formulario registro
+12fae55afd2b8c74985510c4887389e884f23330 12fae55afd2b8c74985510c4887389e884f23330 Giancarlos <gian@gianko.com> 1760503126 -0600	Branch: renamed refs/heads/master to refs/heads/develop
+12fae55afd2b8c74985510c4887389e884f23330 12fae55afd2b8c74985510c4887389e884f23330 Giancarlos <gian@gianko.com> 1760503223 -0600	Branch: renamed refs/heads/develop to refs/heads/develop
+12fae55afd2b8c74985510c4887389e884f23330 12fae55afd2b8c74985510c4887389e884f23330 Giancarlos <gian@gianko.com> 1760503261 -0600	Branch: renamed refs/heads/develop to refs/heads/main
+12fae55afd2b8c74985510c4887389e884f23330 57d93cbde2a65ecdccdeec09554ea21ebe4d4adf Giancarlos <gian@gianko.com> 1760503450 -0600	commit: feat: simplificar API REST y agregar CHANGELOG
