@@ -285,6 +285,51 @@ xpsocial_login/
 
 ---
 
+### Versión 3.1.6 - Eliminación de Funcionalidad de Google Sheets
+
+#### Cambios Realizados
+- **Archivos modificados**: `opciones.php`, `class-xpsocial_register-form.php`
+- **Acción**: Eliminación completa de funcionalidad de Google Sheets
+- **Fecha**: $(date)
+
+#### Detalles de la Modificación
+1. **Archivo `opciones.php`**:
+   - Eliminado registro de opción `xpsocial_GoogleID`
+   - Removida sección completa de configuración de Google Sheets
+   - Cambiado nombre de pestaña de "Google Sheet y Estilos" a "Estilos"
+   - Eliminado campo de entrada para URL de Google Sheets
+
+2. **Archivo `class-xpsocial_register-form.php`**:
+   - Eliminado código que enviaba datos a Google Sheets
+   - Removida variable `$dataGoogle` y su array de datos
+   - Eliminada verificación `$urlGoogle` y envío `wp_remote_post()`
+   - Removida lógica de envío de datos de formulario a Google
+
+#### Funcionalidades Eliminadas
+- ❌ **Configuración de URL de Google Sheets**
+- ❌ **Envío automático de datos de registro a Google Sheets**
+- ❌ **Campo de configuración en panel de administración**
+- ❌ **Integración con Google Sheets API**
+- ❌ **Almacenamiento de datos en hojas de cálculo de Google**
+
+#### Beneficios de la Eliminación
+- **Mayor privacidad**: Los datos ya no se envían a servicios externos
+- **Mejor rendimiento**: Sin envíos HTTP adicionales a Google
+- **Simplicidad**: Menos configuraciones en el panel de administración
+- **Menos dependencias**: No depende de servicios externos de Google
+- **Código más limpio**: Eliminada lógica de envío de datos
+
+#### Funcionalidades que SÍ se mantienen
+- ✅ **Formularios de registro y login**
+- ✅ **Integración con APIs de Xeerpa**
+- ✅ **Selección de países y provincias**
+- ✅ **Validación de formularios**
+- ✅ **Redirecciones configuradas**
+- ✅ **Estilos y personalización**
+- ✅ **Selección automática de país único**
+
+---
+
 ## Próximas Modificaciones
 
 ### Pendientes de Definir

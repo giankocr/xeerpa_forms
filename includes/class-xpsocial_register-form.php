@@ -173,35 +173,7 @@ function process_background_api_calls($user_id, $user_data) {
             )));
         }
 
-        // 3. Send data to Google (optimized)
-        $dataGoogle = array(
-            'it' => $user_data['it'],
-            'sn' => $user_data['sn'],
-            'FirstName' => $user_data['first_name'],
-            'LastName' => $user_data['last_name'],
-            'IDCedula' => $user_data['IDCedula'],
-            'FechaDeNacimiento' => $fecha_formateada,
-            'EmailAddress' => $user_data['email'],
-            'Celular' => $user_data['phone'],
-            'Genero' => $field_gender,
-            'provincia' => $user_data['provincia'],
-            'aceptaterminos' => $user_data['robinson'] ? 'Sí' : 'Sí',
-            'politicaprivacidad' => $user_data['politicaprivacidad'] ? 'Sí' : 'Sí',
-            'captureDate' => date('d/m/Y'),
-            'modifiedDate' => date('d/m/Y H:i:s')
-        );
-
-        $urlGoogle = get_option('xpsocial_GoogleID', false);
-        if ($urlGoogle) {
-            wp_remote_post($urlGoogle, XPSocial_Performance::get_optimized_request_args(array(
-                'method' => 'POST',
-                'blocking' => false, // Non-blocking
-                'headers' => array(
-                    'Content-Type' => 'application/x-www-form-urlencoded',
-                ),
-                'body' => $dataGoogle,
-            )));
-        }
+        // Google Sheets functionality removed - no longer sending data to Google
 
     } catch (Exception $e) {
         error_log("Background API processing error: " . $e->getMessage());

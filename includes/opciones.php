@@ -50,7 +50,7 @@ function xpsocial_plugin_init()
     register_setting('xpsocial-group', 'xpsocial_Callback');
     register_setting('xpsocial-group', 'xpsocial_Settings');
     register_setting('xpsocial-group', 'xpsocial_GFormID');
-    register_setting('xpsocial-group', 'xpsocial_GoogleID');
+    // Google Sheets functionality removed
     register_setting('xpsocial-group', 'xpsocial_GFxeerpa');
     register_setting('xpsocial-group', 'xpsocial_redirect_login');
     register_setting('xpsocial-group', 'xpsocial_redirect_to_registro');
@@ -111,7 +111,7 @@ function xpsocial_plugin_options()
 
         <div class="tab">
             <div class="tablinks " onclick="openCity(event, 'London')" id="defaultOpen">Configuración</div>
-            <div class="tablinks" onclick="openCity(event, 'Paris')">Google Sheet y Estilos</div>
+            <div class="tablinks" onclick="openCity(event, 'Paris')">Estilos</div>
             <div class="tablinks" onclick="openCity(event, 'Tokyo')">Acerca de</div>
         </div>
         <!--
@@ -338,18 +338,7 @@ function xpsocial_plugin_options()
     *****************************/
 -->
         <div id="Paris" class="tabcontent">
-            <table class='form_data'>
-                <tr valign='top'>
-                    <th scope="row">
-                        <label>URL Google Sheets</label>
-                    </th>
-                    <td>
-                        <input type="text" size='130' name="xpsocial_GoogleID" id="xpsocial_GoogleID_xeerpa_" value='<?php echo get_option('xpsocial_GoogleID', $default = false) ?>' />
-                        <br>
-                        <small>Ingrese la URL de GOOGLE Sheets. Proporcionada por Gianko.com</small>
-                    </td>
-                </tr>
-            </table>
+            <!-- Google Sheets configuration removed -->
             <section>
                 <H3>Estilos de Formularios</H3>
                 <article>
