@@ -1,16 +1,4 @@
-function togglePassword() {
-        const passwordInput = document.getElementById("field_password");
-        const togglePassword = document.querySelector("span.toggle-password");
-        if (passwordInput.type === 'password') {
-            passwordInput.type = 'text';
-            togglePassword.classList.remove('eye-closed');
-            togglePassword.classList.add('eye-open');
-        } else {
-            passwordInput.type = 'password';
-            togglePassword.classList.remove('eye-open');
-            togglePassword.classList.add('eye-closed');
-        }
-}
+
 document.addEventListener("DOMContentLoaded", function () {
     if (document.querySelector(".socials")) {
         const countrySelect = document.getElementById("field_country");
@@ -69,8 +57,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 document.getElementById("field_email").value = queryParams.email;
             }
             if (queryParams.firstname) {
-                document.getElementById("field_firstname").value =
-                queryParams.firstname;
+                document.getElementById("field_firstname").value = queryParams.firstname;
             }
             if (queryParams.lastname) {
                 document.getElementById("field_lastname").value = queryParams.lastname;

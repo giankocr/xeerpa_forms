@@ -123,7 +123,6 @@ class Xpsocial_login
          */
         require_once plugin_dir_path(dirname(__FILE__)) . 'public/class-xpsocial_login-public.php';
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-xpsocial_api-rest-login.php';
-        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-xpsocial_login-form.php';
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-xpsocial_register-form.php';
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-shortcode-register.php';
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-xpsocial_style.php';

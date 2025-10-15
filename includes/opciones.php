@@ -10,27 +10,26 @@ add_action('admin_menu', 'xpsocial_admin_menu');
 add_action('admin_init', 'xpsocial_plugin_init');
 function xpsocial_enqueue_scripts()
 {
-    if (!is_user_logged_in()) {
-        // Crear un script inline con las variables que necesitas
-        wp_register_script('xpsocial-options-script', '', [], '', true);
-        wp_enqueue_script('xpsocial-options-script');
+    // User login check removed - always enqueue scripts
+    // Crear un script inline con las variables que necesitas
+    wp_register_script('xpsocial-options-script', '', [], '', true);
+    wp_enqueue_script('xpsocial-options-script');
 
-        // Obtén las URLs de redirección
-        $redirect_url = get_option('xpsocial_redirect_login');
-        $register_url = get_option('xpsocial_redirect_to_registro');
-        $redirect_existing_user = get_option('xpsocial_redirect_existing_user');
-        // Pasa las variables a JavaScript
-        wp_localize_script('xpsocial-options-script', 'URLxpSocialPluginData', array(
-            'redirectUrl' => esc_url($redirect_url),
-            'registerUrl' => esc_url($register_url),
-            'redirectExistingUser' => esc_url($redirect_existing_user)
-        ));
+    // Obtén las URLs de redirección
+    $redirect_url = get_option('xpsocial_redirect_login');
+    $register_url = get_option('xpsocial_redirect_to_registro');
+    $redirect_existing_user = get_option('xpsocial_redirect_existing_user');
+    // Pasa las variables a JavaScript
+    wp_localize_script('xpsocial-options-script', 'URLxpSocialPluginData', array(
+        'redirectUrl' => esc_url($redirect_url),
+        'registerUrl' => esc_url($register_url),
+        'redirectExistingUser' => esc_url($redirect_existing_user)
+    ));
 
-        // Opcionalmente, puedes agregar cualquier código JavaScript inline que necesites
-       /* wp_add_inline_script('xpsocial-options-script', '
-            console.log("XPSocial URLs loaded:", URLxpSocialPluginData);
-        ');*/
-    }
+    // Opcionalmente, puedes agregar cualquier código JavaScript inline que necesites
+   /* wp_add_inline_script('xpsocial-options-script', '
+        console.log("XPSocial URLs loaded:", URLxpSocialPluginData);
+    ');*/
 }
 
 add_action('wp_enqueue_scripts', 'xpsocial_enqueue_scripts');
@@ -103,7 +102,7 @@ function xpsocial_plugin_options()
     ?>
     <span class="xp_title">
         <h1> Xp Social Login </h1>
-        <img src="<?php echo esc_url(plugins_url()); ?>/xpsocial_login/public/images/gianko_rec_black.png" alt="logo de gianko" width="250">
+        <img src="<?php echo esc_url(plugins_url()); ?>/xpsocial_login/public/images/gianko-logo.png" alt="logo de gianko" width="250">
     </span>
     <form action="options.php" method="post">
         <?php @submit_button(); ?>

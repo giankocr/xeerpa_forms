@@ -241,6 +241,50 @@ xpsocial_login/
 
 ---
 
+### Versión 3.1.5 - Limpieza Adicional de Referencias a Usuarios
+
+#### Cambios Realizados
+- **Archivos modificados**: Múltiples archivos del plugin
+- **Acción**: Eliminación de referencias restantes a funciones de usuarios
+- **Fecha**: $(date)
+
+#### Detalles de la Modificación
+1. **Archivo `class-xpsocial_login-form.php`**:
+   - Eliminada verificación `is_user_logged_in()`
+   - Removida lógica de mostrar mensaje de usuario logueado
+   - Eliminadas referencias a `get_current_user_id()` y `get_user_meta()`
+   - Formulario ahora siempre se muestra sin verificar estado de login
+
+2. **Archivo `opciones.php`**:
+   - Eliminada verificación `is_user_logged_in()` en `xpsocial_enqueue_scripts()`
+   - Scripts ahora siempre se cargan sin verificar estado de usuario
+
+3. **Archivo `recomendador.php`**:
+   - Función `shortcode_recomendador_xeerpa()` completamente reescrita
+   - Eliminadas todas las referencias a usuarios logueados
+   - Recomendador ahora muestra mensaje de funcionalidad deshabilitada
+   - Removidas referencias a `wp_get_current_user()` y `get_user_meta()`
+
+4. **Archivo `class-xpsocial_register-form.php`**:
+   - Eliminada verificación `email_exists()` 
+   - Removida lógica de verificar si email ya está registrado
+
+#### Funcionalidades Adicionales Eliminadas
+- ❌ **Verificación de estado de login en formularios**
+- ❌ **Mensajes personalizados para usuarios logueados**
+- ❌ **Verificación de emails existentes**
+- ❌ **Sistema de recomendador basado en usuarios**
+- ❌ **Carga condicional de scripts según estado de usuario**
+
+#### Beneficios de la Limpieza Adicional
+- **Consistencia total**: No hay referencias residuales a usuarios
+- **Código más limpio**: Eliminadas todas las verificaciones innecesarias
+- **Mejor rendimiento**: Sin verificaciones de estado de usuario
+- **Simplicidad máxima**: Plugin completamente enfocado en formularios
+- **Mantenimiento simplificado**: Sin lógica condicional compleja
+
+---
+
 ## Próximas Modificaciones
 
 ### Pendientes de Definir

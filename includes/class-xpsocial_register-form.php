@@ -20,11 +20,7 @@ function after_submission_xeerpa()
     $obfKey2 = '0123456789@ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_';
     $obfKey1 = '0fg14GHIJ789@ADFvwKLM2eh3NOPQz_RSYZabEcdi56jklmVWXnoTUpqBCrstuxy';
     if (isset($_POST[ 'field_email' ]) && !empty($_POST[ 'field_email' ])) {
-        // Check if the email already exists
-        if (email_exists(strtolower($_POST[ 'field_email' ]))) {
-            echo '<script>alert("La dirección de correo electrónico ya está registrada. Por favor, utiliza un correo electrónico diferente."); window.history.back();</script>';
-            return;
-        }
+        // Email existence check removed - no longer managing WordPress users
         date_default_timezone_set('America/Costa_Rica');
         
         // Sanitize and validate input data first (fast operations)

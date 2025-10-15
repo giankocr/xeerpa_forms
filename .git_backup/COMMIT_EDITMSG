@@ -1,7 +1,0 @@
-feat: simplificar API REST y agregar CHANGELOG
-
-- Simplificar class-xpsocial_api-rest-login.php manteniendo solo funciones de países y estados
-- Agregar documentación PHPDoc detallada
-- Mejorar validación de parámetros y manejo de errores
-- Crear CHANGELOG.md para registro de modificaciones
-- Reducir código en ~70% manteniendo funcionalidad esencial
