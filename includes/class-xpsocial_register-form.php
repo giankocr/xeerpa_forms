@@ -65,7 +65,7 @@ function after_submission_xeerpa()
         
         $provincia = sanitize_text_field($_POST[ 'field_province' ]);
         $snid = sanitize_text_field($_POST[ 'field_snid' ]);
-        $sn = sanitize_text_field($_POST[ 'field_sn' ]);
+        $sn = sanitize_text_field($_POST[ 'field_sn' ]) ?: 'FM'; // Default to 'FM' if not provided
         $password = isset($_POST[ 'field_password' ]) ? sanitize_text_field($_POST[ 'field_password' ]) : $it;
 
         // Prepare boolean values - check means "Sí"
@@ -88,9 +88,18 @@ function after_submission_xeerpa()
                 if (isset($_POST[$field_name])) {
                     if ($field['type'] === 'checkbox') {
                         // For checkboxes, we get an array
-                        $dynamic_fields_data[$field['name']] = is_array($_POST[$field_name]) ? implode(', ', $_POST[$field_name]) : $_POST[$field_name];
+                        $values = is_array($_POST[$field_name]) ? $_POST[$field_name] : array($_POST[$field_name]);
+                        $sanitized_values = array();
+                        foreach ($values as $value) {
+                            $sanitized_values[] = sanitize_text_field(html_entity_decode($value, ENT_QUOTES, 'UTF-8'));
+                        }
+                        $dynamic_fields_data[$field['name']] = implode(', ', $sanitized_values);
                     } else {
-                        $dynamic_fields_data[$field['name']] = sanitize_text_field($_POST[$field_name]);
+                        // Properly handle UTF-8 encoding for dynamic fields
+                        $value = $_POST[$field_name];
+                        $value = html_entity_decode($value, ENT_QUOTES, 'UTF-8');
+                        $value = sanitize_text_field($value);
+                        $dynamic_fields_data[$field['name']] = $value;
                     }
                 }
             }
@@ -158,10 +167,27 @@ function after_submission_xeerpa()
                 if (!empty($form_config['country'])) {
                     $lead_data['Country'] = $form_config['country'];
                 }
+                // Add form config for dynamic fields processing
+                $lead_data['form_config'] = $form_config;
             } else {
                 // Fallback values if no form config
                 $lead_data['Source'] = $form_source ?: 'default_form';
                 $lead_data['Marca'] = 'Default';
+            }
+            
+            // Validate lead data before saving (pass form config for validation settings)
+            $validation_errors = $leads_manager->validate_lead_data($lead_data, $form_config);
+            
+            if (!empty($validation_errors)) {
+                // Return validation errors as JSON response
+                header('Content-Type: application/json');
+                http_response_code(400);
+                echo json_encode(array(
+                    'success' => false,
+                    'errors' => $validation_errors,
+                    'message' => 'Errores de validación encontrados'
+                ));
+                exit;
             }
             
             // Save the lead

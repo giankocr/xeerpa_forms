@@ -41,6 +41,25 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true'
     ));
     
+    // Endpoints para validaciones
+    register_rest_route('geo-api/v1', '/validate-email', array(
+        'methods' => 'POST',
+        'callback' => 'validate_email_endpoint',
+        'permission_callback' => '__return_true'
+    ));
+    
+    register_rest_route('geo-api/v1', '/validate-id-number', array(
+        'methods' => 'POST',
+        'callback' => 'validate_id_number_endpoint',
+        'permission_callback' => '__return_true'
+    ));
+    
+    register_rest_route('geo-api/v1', '/validate-age', array(
+        'methods' => 'POST',
+        'callback' => 'validate_age_endpoint',
+        'permission_callback' => '__return_true'
+    ));
+    
 });
 
 /**
@@ -284,4 +303,120 @@ function create_leads_table_endpoint(WP_REST_Request $request)
     }
     
     return rest_ensure_response($response);
+}
+
+/**
+ * Endpoint para validar email
+ * 
+ * @param WP_REST_Request $request Objeto de solicitud REST
+ * @return WP_REST_Response Respuesta con el resultado de la validación
+ */
+function validate_email_endpoint($request)
+{
+    $email = $request->get_param('email');
+    $source = $request->get_param('source');
+    
+    if (empty($email)) {
+        return rest_ensure_response(array(
+            'valid' => false,
+            'message' => 'Email es requerido'
+        ));
+    }
+    
+    // Validar formato de email
+    if (!is_email($email)) {
+        return rest_ensure_response(array(
+            'valid' => false,
+            'message' => 'El formato del email no es válido'
+        ));
+    }
+    
+    // Verificar si ya existe
+    $leads_manager = Xpsocial_Leads_Manager::get_instance();
+    if ($leads_manager->email_exists($email, $source)) {
+        return rest_ensure_response(array(
+            'valid' => false,
+            'message' => 'Este email ya está registrado para esta campaña'
+        ));
+    }
+    
+    return rest_ensure_response(array(
+        'valid' => true,
+        'message' => 'Email válido'
+    ));
+}
+
+/**
+ * Endpoint para validar ID Number
+ * 
+ * @param WP_REST_Request $request Objeto de solicitud REST
+ * @return WP_REST_Response Respuesta con el resultado de la validación
+ */
+function validate_id_number_endpoint($request)
+{
+    $id_number = $request->get_param('id_number');
+    $source = $request->get_param('source');
+    
+    if (empty($id_number)) {
+        return rest_ensure_response(array(
+            'valid' => false,
+            'message' => 'Número de identificación es requerido'
+        ));
+    }
+    
+    // Verificar si ya existe
+    $leads_manager = Xpsocial_Leads_Manager::get_instance();
+    if ($leads_manager->id_number_exists($id_number, $source)) {
+        return rest_ensure_response(array(
+            'valid' => false,
+            'message' => 'Este número de identificación ya está registrado para esta campaña'
+        ));
+    }
+    
+    return rest_ensure_response(array(
+        'valid' => true,
+        'message' => 'Número de identificación válido'
+    ));
+}
+
+/**
+ * Endpoint para validar edad mínima
+ * 
+ * @param WP_REST_Request $request Objeto de solicitud REST
+ * @return WP_REST_Response Respuesta con el resultado de la validación
+ */
+function validate_age_endpoint($request)
+{
+    $birth_date = $request->get_param('birth_date');
+    $min_age = $request->get_param('min_age') ?: 18;
+    
+    if (empty($birth_date)) {
+        return rest_ensure_response(array(
+            'valid' => false,
+            'message' => 'Fecha de nacimiento es requerida'
+        ));
+    }
+    
+    // Validar formato de fecha
+    $birth_timestamp = strtotime($birth_date);
+    if ($birth_timestamp === false) {
+        return rest_ensure_response(array(
+            'valid' => false,
+            'message' => 'Formato de fecha inválido'
+        ));
+    }
+    
+    // Verificar edad mínima
+    $leads_manager = Xpsocial_Leads_Manager::get_instance();
+    if (!$leads_manager->validate_minimum_age($birth_date, $min_age)) {
+        return rest_ensure_response(array(
+            'valid' => false,
+            'message' => "Debes ser mayor de {$min_age} años para registrarte"
+        ));
+    }
+    
+    return rest_ensure_response(array(
+        'valid' => true,
+        'message' => 'Edad válida'
+    ));
 }

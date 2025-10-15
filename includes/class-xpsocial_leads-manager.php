@@ -12,6 +12,7 @@ class Xpsocial_Leads_Manager
 {
     private static $instance = null;
     private $table_name;
+    private $dynamic_fields_table;
 
     public static function get_instance()
     {
@@ -25,6 +26,7 @@ class Xpsocial_Leads_Manager
     {
         global $wpdb;
         $this->table_name = $wpdb->prefix . 'xpsocial_leads';
+        $this->dynamic_fields_table = $wpdb->prefix . 'xpsocial_dynamic_fields';
         
         // Only log constructor call once per session
         if (!isset($_SESSION['xpsocial_leads_manager_logged'])) {
@@ -34,6 +36,7 @@ class Xpsocial_Leads_Manager
         
         // Check if table exists, if not create it
         $this->ensure_table_exists();
+        $this->ensure_dynamic_fields_table_exists();
     }
 
     /**
@@ -71,6 +74,33 @@ class Xpsocial_Leads_Manager
         if (!$table_exists) {
             error_log('XPSocial: Table does not exist, attempting to create it');
             $this->create_table();
+        }
+    }
+
+    /**
+     * Ensure the dynamic fields table exists, create it if it doesn't
+     */
+    private function ensure_dynamic_fields_table_exists()
+    {
+        global $wpdb;
+        
+        // Check if we're using SQLite or MySQL
+        $is_sqlite = (class_exists('WP_SQLite_DB') && $wpdb instanceof WP_SQLite_DB) || 
+                     (isset($wpdb->dbh) && $wpdb->dbh instanceof PDO);
+        
+        if ($is_sqlite) {
+            // SQLite - use direct query without prepare for table name
+            $result = $wpdb->get_var("SELECT name FROM sqlite_master WHERE type='table' AND name='{$this->dynamic_fields_table}'");
+            $table_exists = ($result == $this->dynamic_fields_table);
+        } else {
+            // MySQL
+            $result = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $this->dynamic_fields_table));
+            $table_exists = ($result == $this->dynamic_fields_table);
+        }
+        
+        if (!$table_exists) {
+            error_log('XPSocial: Dynamic fields table does not exist, attempting to create it');
+            $this->create_dynamic_fields_table();
         }
     }
 
@@ -169,6 +199,60 @@ class Xpsocial_Leads_Manager
     }
 
     /**
+     * Create the dynamic fields table
+     */
+    private function create_dynamic_fields_table()
+    {
+        global $wpdb;
+        $charset_collate = $wpdb->get_charset_collate();
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+        // Check if we're using SQLite or MySQL
+        $is_sqlite = (class_exists('WP_SQLite_DB') && $wpdb instanceof WP_SQLite_DB) || 
+                     (isset($wpdb->dbh) && $wpdb->dbh instanceof PDO);
+        
+        if ($is_sqlite) {
+            // SQLite compatible SQL
+            $sql = "CREATE TABLE {$this->dynamic_fields_table} (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                lead_id INTEGER NOT NULL,
+                field_name TEXT NOT NULL,
+                field_value TEXT,
+                field_type TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (lead_id) REFERENCES {$this->table_name}(id) ON DELETE CASCADE
+            );";
+            
+            // For SQLite, use direct query
+            $result = $wpdb->query($sql);
+            if ($result === false) {
+                error_log('XPSocial: Error creating dynamic fields table with direct query: ' . $wpdb->last_error);
+            } else {
+                error_log('XPSocial: Dynamic fields table created successfully (SQLite)');
+            }
+        } else {
+            // MySQL compatible SQL
+            $sql = "CREATE TABLE {$this->dynamic_fields_table} (
+                id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+                lead_id BIGINT(20) UNSIGNED NOT NULL,
+                field_name VARCHAR(100) NOT NULL,
+                field_value TEXT,
+                field_type VARCHAR(50),
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY lead_id (lead_id),
+                KEY field_name (field_name),
+                FOREIGN KEY (lead_id) REFERENCES {$this->table_name}(id) ON DELETE CASCADE
+            ) {$charset_collate};";
+            
+            // For MySQL, use dbDelta
+            dbDelta($sql);
+            error_log('XPSocial: Dynamic fields table created successfully (MySQL)');
+        }
+    }
+
+    /**
      * Guardar un lead en la tabla
      *
      * @param array $data Datos del lead
@@ -255,7 +339,129 @@ class Xpsocial_Leads_Manager
         $lead_id = $wpdb->insert_id;
         error_log('XPSocial: Lead guardado exitosamente con ID: ' . $lead_id);
 
+        // Guardar campos dinámicos por separado si existen
+        if (!empty($data['dynamic_fields']) && is_array($data['dynamic_fields'])) {
+            $this->save_dynamic_fields($lead_id, $data['dynamic_fields'], $data['form_config'] ?? null);
+        }
+
         return $lead_id;
+    }
+
+    /**
+     * Guardar campos dinámicos en tabla separada
+     *
+     * @param int $lead_id ID del lead
+     * @param array $dynamic_fields Campos dinámicos
+     * @param array $form_config Configuración del formulario
+     * @return bool True si se guardó correctamente
+     */
+    private function save_dynamic_fields($lead_id, $dynamic_fields, $form_config = null)
+    {
+        global $wpdb;
+
+        if (empty($dynamic_fields) || !is_array($dynamic_fields)) {
+            return true;
+        }
+
+        // Ensure dynamic fields table exists
+        $this->ensure_dynamic_fields_table_exists();
+
+        $inserted_count = 0;
+        foreach ($dynamic_fields as $field_name => $field_value) {
+            // Get field type from form config if available
+            $field_type = 'text';
+            if ($form_config && !empty($form_config['dynamic_fields'])) {
+                foreach ($form_config['dynamic_fields'] as $field_config) {
+                    if ($field_config['name'] === $field_name) {
+                        $field_type = $field_config['type'];
+                        break;
+                    }
+                }
+            }
+
+            $field_data = array(
+                'lead_id' => $lead_id,
+                'field_name' => sanitize_text_field($field_name),
+                'field_value' => sanitize_text_field($field_value),
+                'field_type' => sanitize_text_field($field_type)
+            );
+
+            $result = $wpdb->insert($this->dynamic_fields_table, $field_data);
+            
+            if ($result !== false) {
+                $inserted_count++;
+            } else {
+                error_log('XPSocial: Error al insertar campo dinámico - ' . $wpdb->last_error);
+            }
+        }
+
+        error_log("XPSocial: Guardados {$inserted_count} campos dinámicos para lead ID: {$lead_id}");
+        return $inserted_count > 0;
+    }
+
+    /**
+     * Obtener campos dinámicos de un lead
+     *
+     * @param int $lead_id ID del lead
+     * @return array Campos dinámicos
+     */
+    public function get_dynamic_fields($lead_id)
+    {
+        global $wpdb;
+
+        $results = $wpdb->get_results($wpdb->prepare(
+            "SELECT field_name, field_value, field_type FROM {$this->dynamic_fields_table} WHERE lead_id = %d",
+            $lead_id
+        ));
+
+        $dynamic_fields = array();
+        foreach ($results as $row) {
+            $dynamic_fields[$row->field_name] = array(
+                'value' => $row->field_value,
+                'type' => $row->field_type
+            );
+        }
+
+        return $dynamic_fields;
+    }
+
+    /**
+     * Obtener todos los leads con sus campos dinámicos
+     *
+     * @param array $args Argumentos de consulta
+     * @return array Leads con campos dinámicos
+     */
+    public function get_leads_with_dynamic_fields($args = array())
+    {
+        global $wpdb;
+
+        $defaults = array(
+            'limit' => 50,
+            'offset' => 0,
+            'source' => '',
+            'order_by' => 'id',
+            'order' => 'DESC'
+        );
+
+        $args = wp_parse_args($args, $defaults);
+
+        $where_clause = '';
+        if (!empty($args['source'])) {
+            $where_clause = $wpdb->prepare(" WHERE Source = %s", $args['source']);
+        }
+
+        $order_clause = sprintf(" ORDER BY %s %s", $args['order_by'], $args['order']);
+        $limit_clause = sprintf(" LIMIT %d OFFSET %d", $args['limit'], $args['offset']);
+
+        $sql = "SELECT * FROM {$this->table_name}{$where_clause}{$order_clause}{$limit_clause}";
+        $leads = $wpdb->get_results($sql);
+
+        // Agregar campos dinámicos a cada lead
+        foreach ($leads as $lead) {
+            $lead->dynamic_fields = $this->get_dynamic_fields($lead->id);
+        }
+
+        return $leads;
     }
 
     /**
@@ -413,6 +619,178 @@ class Xpsocial_Leads_Manager
         ");
 
         return $stats;
+    }
+
+    /**
+     * Validar si un email ya existe en la base de datos
+     *
+     * @param string $email Email a validar
+     * @param string $source Source del formulario
+     * @return bool True si el email ya existe
+     */
+    public function email_exists($email, $source = '')
+    {
+        global $wpdb;
+        
+        $email = sanitize_email($email);
+        if (empty($email)) {
+            return false;
+        }
+        
+        $where_clause = "EmailAddress = %s";
+        $params = array($email);
+        
+        if (!empty($source)) {
+            $where_clause .= " AND Source = %s";
+            $params[] = sanitize_text_field($source);
+        }
+        
+        $count = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$this->table_name} WHERE {$where_clause}",
+            $params
+        ));
+        
+        return $count > 0;
+    }
+
+    /**
+     * Validar si un ID Number ya existe en la base de datos
+     *
+     * @param string $id_number ID Number a validar
+     * @param string $source Source del formulario
+     * @return bool True si el ID Number ya existe
+     */
+    public function id_number_exists($id_number, $source = '')
+    {
+        global $wpdb;
+        
+        $id_number = sanitize_text_field($id_number);
+        if (empty($id_number)) {
+            return false;
+        }
+        
+        $where_clause = "IDNumber = %s";
+        $params = array($id_number);
+        
+        if (!empty($source)) {
+            $where_clause .= " AND Source = %s";
+            $params[] = sanitize_text_field($source);
+        }
+        
+        $count = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$this->table_name} WHERE {$where_clause}",
+            $params
+        ));
+        
+        return $count > 0;
+    }
+
+    /**
+     * Validar si una combinación de email y source ya existe
+     *
+     * @param string $email Email a validar
+     * @param string $source Source del formulario
+     * @return bool True si la combinación ya existe
+     */
+    public function email_source_exists($email, $source)
+    {
+        global $wpdb;
+        
+        $email = sanitize_email($email);
+        $source = sanitize_text_field($source);
+        
+        if (empty($email) || empty($source)) {
+            return false;
+        }
+        
+        $count = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$this->table_name} WHERE EmailAddress = %s AND Source = %s",
+            $email, $source
+        ));
+        
+        return $count > 0;
+    }
+
+    /**
+     * Validar edad mínima basada en fecha de nacimiento
+     *
+     * @param string $birth_date Fecha de nacimiento (YYYY-MM-DD)
+     * @param int $min_age Edad mínima requerida (default: 18)
+     * @return bool True si cumple con la edad mínima
+     */
+    public function validate_minimum_age($birth_date, $min_age = 18)
+    {
+        if (empty($birth_date)) {
+            return false;
+        }
+        
+        $birth_timestamp = strtotime($birth_date);
+        if ($birth_timestamp === false) {
+            return false;
+        }
+        
+        $today = new DateTime();
+        $birth = new DateTime($birth_date);
+        $age = $today->diff($birth)->y;
+        
+        return $age >= $min_age;
+    }
+
+    /**
+     * Validar todos los campos de un lead
+     *
+     * @param array $data Datos del lead a validar
+     * @return array Array con errores encontrados
+     */
+    public function validate_lead_data($data, $form_config = null)
+    {
+        $errors = array();
+        
+        // Get validation settings from form config
+        $validate_email = true;
+        $validate_id_number = true;
+        $validate_age = true;
+        $min_age = 18;
+        
+        if ($form_config) {
+            $validate_email = isset($form_config['validate_email']) ? (bool)$form_config['validate_email'] : true;
+            $validate_id_number = isset($form_config['validate_id_number']) ? (bool)$form_config['validate_id_number'] : true;
+            $validate_age = isset($form_config['validate_age']) ? (bool)$form_config['validate_age'] : true;
+            $min_age = isset($form_config['min_age']) ? (int)$form_config['min_age'] : 18;
+        }
+        
+        // Validar email (solo si está habilitado)
+        if ($validate_email && !empty($data['EmailAddress'])) {
+            if (!is_email($data['EmailAddress'])) {
+                $errors['email'] = 'El formato del email no es válido';
+            } elseif ($this->email_exists($data['EmailAddress'], $data['Source'] ?? '')) {
+                $errors['email'] = 'Este email ya está registrado para esta campaña';
+            }
+        }
+        
+        // Validar ID Number (solo si está habilitado)
+        if ($validate_id_number && !empty($data['IDNumber'])) {
+            if ($this->id_number_exists($data['IDNumber'], $data['Source'] ?? '')) {
+                $errors['id_number'] = 'Este número de identificación ya está registrado para esta campaña';
+            }
+        }
+        
+        // Validar edad mínima (solo si está habilitado)
+        if ($validate_age && !empty($data['BirthDate'])) {
+            if (!$this->validate_minimum_age($data['BirthDate'], $min_age)) {
+                $errors['birth_date'] = "Debes ser mayor de {$min_age} años para registrarte";
+            }
+        }
+        
+        // Validar campos requeridos básicos (siempre requeridos)
+        $required_fields = array('FirstName', 'LastName');
+        foreach ($required_fields as $field) {
+            if (empty($data[$field])) {
+                $errors[$field] = 'Este campo es obligatorio';
+            }
+        }
+        
+        return $errors;
     }
 
     /**

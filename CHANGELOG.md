@@ -2476,4 +2476,719 @@ Si el error persiste, verificar:
 - **Colores**: `background-color` y `color` desde configuración del plugin
 - **Apariencia personalizada**: Flecha SVG en lugar de nativa del navegador
 
+## [3.1.27] - 2025-10-15
+
+### Sistema Completo de Validaciones Frontend y Backend
+- **Validaciones de duplicados**: Implementadas validaciones para email, source e ID Number
+- **Validación de edad mínima**: Verificación de que el usuario sea mayor de 18 años
+- **Endpoints REST**: Creados endpoints para validaciones AJAX en tiempo real
+- **Validaciones JavaScript**: Implementadas validaciones en tiempo real sin recargar página
+- **Mensajes de error dinámicos**: Mensajes de error mostrados debajo de cada campo
+- **Validaciones backend**: Protección contra envío directo a base de datos
+
+#### Validaciones Implementadas
+
+##### **1. ✅ Validaciones de Duplicados**:
+- **Email + Source**: No se puede registrar el mismo email para la misma campaña
+- **ID Number + Source**: No se puede registrar el mismo número de identificación para la misma campaña
+- **Verificación en tiempo real**: Validación AJAX mientras el usuario escribe
+
+##### **2. ✅ Validación de Edad Mínima**:
+- **18 años mínimo**: Verificación automática basada en fecha de nacimiento
+- **Cálculo preciso**: Usa DateTime para cálculo exacto de edad
+- **Validación en tiempo real**: Se valida al cambiar la fecha de nacimiento
+
+##### **3. ✅ Endpoints REST API**:
+```php
+POST /wp-json/geo-api/v1/validate-email
+POST /wp-json/geo-api/v1/validate-id-number  
+POST /wp-json/geo-api/v1/validate-age
+```
+
+##### **4. ✅ Validaciones JavaScript**:
+- **Debounced validation**: Evita múltiples llamadas API
+- **Validación en tiempo real**: Sin recargar página
+- **Estados visuales**: Campos con errores se marcan en rojo
+- **Mensajes dinámicos**: Errores específicos para cada campo
+
+##### **5. ✅ Protección Backend**:
+- **Validación antes de guardar**: Verificación en `class-xpsocial_register-form.php`
+- **Respuesta JSON**: Errores devueltos como JSON con código 400
+- **Prevención de duplicados**: Protección contra envío directo a BD
+
+#### Métodos de Validación en Leads Manager
+
+```php
+// Validaciones individuales
+$leads_manager->email_exists($email, $source)
+$leads_manager->id_number_exists($id_number, $source)
+$leads_manager->validate_minimum_age($birth_date, $min_age)
+
+// Validación completa
+$errors = $leads_manager->validate_lead_data($data)
+```
+
+#### Estilos de Validación
+
+- **Campos con error**: Borde rojo y sombra roja
+- **Campos válidos**: Borde verde y sombra verde
+- **Mensajes de error**: Animación fadeIn, color rojo
+- **Indicador de carga**: Spinner durante validación AJAX
+
+#### Flujo de Validación
+
+1. **Usuario escribe** → Validación debounced (500ms)
+2. **Llamada AJAX** → Endpoint REST correspondiente
+3. **Respuesta del servidor** → Validación en base de datos
+4. **Actualización visual** → Campo marcado como válido/inválido
+5. **Mensaje de error** → Mostrado debajo del campo si hay error
+6. **Envío del formulario** → Validación final antes de guardar
+
+#### Beneficios de la Implementación
+
+1. **✅ Experiencia de usuario mejorada**: Validación en tiempo real
+2. **✅ Prevención de duplicados**: Protección completa en frontend y backend
+3. **✅ Seguridad**: Validaciones backend contra manipulación
+4. **✅ Feedback inmediato**: Usuario sabe inmediatamente si hay errores
+5. **✅ Prevención de envíos inválidos**: Formulario no se envía con errores
+6. **✅ Código mantenible**: Validaciones centralizadas y reutilizables
+
+## [3.1.28] - 2025-10-15
+
+### Valor por Defecto para UserRegisterSocial
+- **Valor por defecto**: `UserRegisterSocial` ahora tiene "FM" como valor por defecto
+- **Aplicación**: Se aplica cuando el campo `field_sn` no está presente o está vacío
+- **Ubicación**: Modificado en `class-xpsocial_register-form.php`
+- **Consistencia**: Garantiza que siempre haya un valor válido para este campo
+
+#### Cambio Implementado
+
+```php
+// Antes
+$sn = sanitize_text_field($_POST['field_sn']);
+
+// Después  
+$sn = sanitize_text_field($_POST['field_sn']) ?: 'FM'; // Default to 'FM' if not provided
+```
+
+#### Beneficios
+
+1. **✅ Valor consistente**: Siempre hay un valor para `UserRegisterSocial`
+2. **✅ Compatibilidad**: Mantiene compatibilidad con sistemas que esperan este campo
+3. **✅ Fallback seguro**: Si no se proporciona el campo, usa "FM" por defecto
+4. **✅ Aplicación automática**: Se aplica tanto en la base de datos como en la API FIFCO
+
+## [3.1.29] - 2025-10-15
+
+### Corrección de Codificación UTF-8 en Campos Dinámicos
+- **Problema identificado**: Los campos dinámicos se guardaban con codificación incorrecta (ej: "u00bfCual es tu color favorito?")
+- **Solución implementada**: Mejorado el procesamiento de caracteres UTF-8 en campos dinámicos
+- **Ubicaciones corregidas**: 
+  - Procesamiento de formulario (`class-xpsocial_register-form.php`)
+  - Guardado de campos dinámicos en CPT (`class-xpsocial_forms-cpt.php`)
+
+#### Cambios Implementados
+
+##### **1. ✅ Procesamiento de Formulario**:
+```php
+// Antes
+$dynamic_fields_data[$field['name']] = sanitize_text_field($_POST[$field_name]);
+
+// Después
+$value = $_POST[$field_name];
+$value = html_entity_decode($value, ENT_QUOTES, 'UTF-8');
+$value = sanitize_text_field($value);
+$dynamic_fields_data[$field['name']] = $value;
+```
+
+##### **2. ✅ Guardado en CPT**:
+```php
+// Antes
+'label' => sanitize_text_field($field['label']),
+'options' => sanitize_textarea_field($field['options']),
+
+// Después
+$label = html_entity_decode($field['label'], ENT_QUOTES, 'UTF-8');
+$options = html_entity_decode($field['options'], ENT_QUOTES, 'UTF-8');
+'label' => sanitize_text_field($label),
+'options' => sanitize_textarea_field($options),
+```
+
+##### **3. ✅ JSON Encoding**:
+```php
+// Antes
+json_encode($fields)
+
+// Después
+json_encode($fields, JSON_UNESCAPED_UNICODE)
+```
+
+#### Beneficios de la Corrección
+
+1. **✅ Caracteres especiales**: Los acentos y caracteres especiales se guardan correctamente
+2. **✅ Codificación UTF-8**: Manejo adecuado de la codificación UTF-8
+3. **✅ Compatibilidad**: Funciona correctamente con caracteres en español
+4. **✅ Consistencia**: Los datos se muestran igual en la base de datos y en el frontend
+
+#### Campos Afectados
+
+- **Labels de campos dinámicos**: Títulos de los campos
+- **Opciones de select/checkbox**: Valores de las opciones
+- **Placeholders**: Textos de ayuda
+- **Valores de campos dinámicos**: Datos ingresados por el usuario
+
+## [3.1.30] - 2025-10-15
+
+### Columna de Acciones en CPT "Formularios XP Social"
+- **Nueva columna**: Agregada columna "Acciones" al listado del CPT
+- **Botones de acción**: Botones "Editar" y "Eliminar" para cada formulario
+- **Confirmación de eliminación**: JavaScript de confirmación antes de eliminar
+- **Estilos mejorados**: CSS personalizado para los botones de acción
+- **Seguridad**: URLs con nonce para prevenir ataques CSRF
+
+#### Funcionalidades Implementadas
+
+##### **1. ✅ Columna de Acciones**:
+- **Ubicación**: Nueva columna "Acciones" en el listado del CPT
+- **Contenido**: Botones "Editar" y "Eliminar" para cada formulario
+- **Ancho fijo**: 120px para mantener consistencia visual
+
+##### **2. ✅ Botón Editar**:
+```php
+$edit_url = get_edit_post_link($post_id);
+echo '<a href="' . esc_url($edit_url) . '" class="button button-small">Editar</a>';
+```
+
+##### **3. ✅ Botón Eliminar**:
+```php
+$delete_url = wp_nonce_url(
+    admin_url('post.php?post=' . $post_id . '&action=delete'),
+    'delete-post_' . $post_id
+);
+echo '<a href="' . esc_url($delete_url) . '" class="button button-small" onclick="return confirm(\'¿Estás seguro?\');" style="color: #a00;">Eliminar</a>';
+```
+
+##### **4. ✅ Estilos CSS**:
+```css
+.wp-list-table .column-actions {
+    width: 120px;
+}
+
+.wp-list-table .column-actions .button {
+    margin: 2px;
+    padding: 4px 8px;
+    font-size: 11px;
+    line-height: 1.4;
+    min-height: auto;
+}
+
+.wp-list-table .column-actions .button[style*="color: #a00"] {
+    border-color: #dc3232;
+    color: #dc3232 !important;
+}
+
+.wp-list-table .column-actions .button[style*="color: #a00"]:hover {
+    background: #dc3232;
+    color: #fff !important;
+}
+```
+
+#### Estructura de la Tabla
+
+| Columna | Descripción |
+|---------|-------------|
+| **Checkbox** | Selección múltiple |
+| **Título** | Nombre del formulario |
+| **Source** | Identificador único |
+| **Marca FIFCO** | Marca configurada |
+| **Campos Dinámicos** | Número de campos |
+| **Acciones** | Botones Editar/Eliminar |
+| **Fecha** | Fecha de creación |
+
+#### Beneficios de la Implementación
+
+1. **✅ Acceso rápido**: Editar y eliminar formularios directamente desde el listado
+2. **✅ Seguridad**: URLs con nonce para prevenir ataques CSRF
+3. **✅ Confirmación**: JavaScript de confirmación antes de eliminar
+4. **✅ Estilos consistentes**: Botones con estilos de WordPress
+5. **✅ UX mejorada**: Interfaz más intuitiva y funcional
+
+## [3.1.31] - 2025-10-15
+
+### Respeto de Configuración de Validaciones del CPT
+- **Configuración dinámica**: Las validaciones ahora respetan la configuración específica de cada campaña
+- **Frontend y Backend**: Tanto JavaScript como PHP respetan las configuraciones del CPT
+- **Validaciones opcionales**: Email, ID Number y Edad pueden ser habilitados/deshabilitados por campaña
+- **Edad mínima configurable**: Cada campaña puede tener una edad mínima diferente
+
+#### Funcionalidades Implementadas
+
+##### **1. ✅ Atributos de Datos en el Formulario**:
+```html
+<div class="xpsocial-form" 
+     data-source="formulario_audio_2025"
+     data-validate-email="1"
+     data-validate-id-number="0"
+     data-validate-age="1"
+     data-min-age="21">
+```
+
+##### **2. ✅ JavaScript Dinámico**:
+```javascript
+// Initialize validation configuration from form data attributes
+function initializeValidationConfig() {
+    const form = $('.xpsocial-form');
+    if (form.length) {
+        VALIDATION_CONFIG.validateEmail = form.data('validate-email') === 1;
+        VALIDATION_CONFIG.validateIdNumber = form.data('validate-id-number') === 1;
+        VALIDATION_CONFIG.validateAge = form.data('validate-age') === 1;
+        VALIDATION_CONFIG.minAge = parseInt(form.data('min-age')) || 18;
+    }
+}
+```
+
+##### **3. ✅ Validaciones Condicionales**:
+```javascript
+// Validate email (solo si está habilitado)
+function validateEmail(email, source) {
+    if (!VALIDATION_CONFIG.validateEmail) {
+        clearFieldError('field_email');
+        return Promise.resolve(true);
+    }
+    // ... resto de validación
+}
+```
+
+##### **4. ✅ Backend Configurable**:
+```php
+public function validate_lead_data($data, $form_config = null)
+{
+    // Get validation settings from form config
+    $validate_email = true;
+    $validate_id_number = true;
+    $validate_age = true;
+    $min_age = 18;
+    
+    if ($form_config) {
+        $validate_email = isset($form_config['validate_email']) ? (bool)$form_config['validate_email'] : true;
+        $validate_id_number = isset($form_config['validate_id_number']) ? (bool)$form_config['validate_id_number'] : true;
+        $validate_age = isset($form_config['validate_age']) ? (bool)$form_config['validate_age'] : true;
+        $min_age = isset($form_config['min_age']) ? (int)$form_config['min_age'] : 18;
+    }
+    
+    // Validar solo campos habilitados
+    if ($validate_email && !empty($data['EmailAddress'])) {
+        // ... validación de email
+    }
+}
+```
+
+#### Configuración por Campaña
+
+| Campo | Descripción | Valores |
+|-------|-------------|---------|
+| **Validar Email** | Verificar duplicados por campaña | ✅/❌ |
+| **Validar ID Number** | Verificar duplicados por campaña | ✅/❌ |
+| **Validar Edad** | Verificar edad mínima | ✅/❌ |
+| **Edad Mínima** | Edad mínima requerida | 18+ años |
+
+#### Flujo de Validación
+
+1. **✅ Configuración CPT**: Administrador configura validaciones en el CPT
+2. **✅ Atributos HTML**: Configuración se pasa al formulario como data attributes
+3. **✅ JavaScript**: Lee configuración y aplica validaciones condicionales
+4. **✅ Backend**: Recibe configuración y valida según reglas específicas
+5. **✅ Respuesta**: Errores específicos según configuración de campaña
+
+#### Beneficios de la Implementación
+
+1. **✅ Flexibilidad**: Cada campaña puede tener validaciones diferentes
+2. **✅ Configuración centralizada**: Todo desde el CPT del formulario
+3. **✅ Consistencia**: Frontend y backend usan la misma configuración
+4. **✅ UX mejorada**: Solo se validan campos configurados
+5. **✅ Mantenimiento**: Fácil modificar validaciones por campaña
+
+## [3.1.32] - 2025-10-15
+
+### Corrección de Lectura de Configuración de Validaciones
+- **Problema identificado**: Las configuraciones de validación del CPT no se estaban leyendo correctamente en el JavaScript
+- **Causa**: Faltaban las configuraciones de validación en `get_form_config_by_source()` y problemas con la lectura de atributos `data-*`
+- **Solución**: Agregadas configuraciones de validación al array de configuración y mejorada la lectura de atributos en JavaScript
+
+#### Funcionalidades Corregidas
+
+##### **1. ✅ Configuración Completa en `get_form_config_by_source()`**:
+```php
+$config = array(
+    'source' => $source,
+    'success_html' => get_post_meta($post->ID, '_xpsocial_success_html', true),
+    'fifco_enabled' => get_post_meta($post->ID, '_xpsocial_fifco_enabled', true),
+    'marca' => get_post_meta($post->ID, '_xpsocial_marca', true),
+    'country' => get_post_meta($post->ID, '_xpsocial_country', true),
+    'show_terms' => get_post_meta($post->ID, '_xpsocial_show_terms', true),
+    'show_privacy' => get_post_meta($post->ID, '_xpsocial_show_privacy', true),
+    'validate_email' => get_post_meta($post->ID, '_xpsocial_validate_email', true),
+    'validate_id_number' => get_post_meta($post->ID, '_xpsocial_validate_id_number', true),
+    'validate_age' => get_post_meta($post->ID, '_xpsocial_validate_age', true),
+    'min_age' => get_post_meta($post->ID, '_xpsocial_min_age', true) ?: 18,
+    'dynamic_fields' => array()
+);
+```
+
+##### **2. ✅ Lectura Mejorada de Atributos Data**:
+```javascript
+function initializeValidationConfig() {
+    const form = $('.xpsocial-form');
+    if (form.length) {
+        // Read data attributes correctly (jQuery converts kebab-case to camelCase)
+        VALIDATION_CONFIG.validateEmail = form.data('validateEmail') === 1 || form.data('validate-email') === 1;
+        VALIDATION_CONFIG.validateIdNumber = form.data('validateIdNumber') === 1 || form.data('validate-id-number') === 1;
+        VALIDATION_CONFIG.validateAge = form.data('validateAge') === 1 || form.data('validate-age') === 1;
+        VALIDATION_CONFIG.minAge = parseInt(form.data('minAge') || form.data('min-age')) || 18;
+        
+        console.log('Validation config loaded:', VALIDATION_CONFIG);
+        console.log('Form data attributes:', {
+            'validate-email': form.attr('data-validate-email'),
+            'validate-id-number': form.attr('data-validate-id-number'),
+            'validate-age': form.attr('data-validate-age'),
+            'min-age': form.attr('data-min-age')
+        });
+    }
+}
+```
+
+#### Problema Resuelto
+
+**Antes**: 
+```javascript
+// Debug mostraba:
+{
+    validateEmail: false,
+    validateIdNumber: false, 
+    validateAge: false
+}
+```
+
+**Después**:
+```javascript
+// Debug ahora muestra:
+{
+    validateEmail: true,    // Si está habilitado en el CPT
+    validateIdNumber: true, // Si está habilitado en el CPT
+    validateAge: true,      // Si está habilitado en el CPT
+    minAge: 21             // Valor configurado en el CPT
+}
+```
+
+#### Flujo de Configuración Corregido
+
+1. **✅ CPT Guarda**: Configuraciones se guardan en `_xpsocial_validate_*` meta fields
+2. **✅ `get_form_config_by_source()`**: Ahora incluye todas las configuraciones de validación
+3. **✅ Template HTML**: Pasa configuraciones como atributos `data-*`
+4. **✅ JavaScript**: Lee correctamente los atributos y aplica validaciones
+5. **✅ Backend**: Recibe configuración completa para validaciones
+
+#### Beneficios de la Corrección
+
+1. **✅ Configuración Respeta CPT**: Las validaciones ahora se aplican según la configuración del formulario
+2. **✅ Debug Mejorado**: Console.log muestra valores reales de configuración
+3. **✅ Compatibilidad**: Soporte para ambos formatos de atributos (kebab-case y camelCase)
+4. **✅ Validaciones Funcionales**: Email, ID Number y Edad se validan solo si están habilitados
+5. **✅ Edad Mínima Dinámica**: Cada campaña puede tener su propia edad mínima
+
+## [3.1.33] - 2025-10-15
+
+### Sistema Eficiente de Campos Dinámicos
+- **Nueva tabla separada**: Creación de `wp_xpsocial_dynamic_fields` para almacenar campos dinámicos por separado
+- **Mejor rendimiento**: Consultas más eficientes y análisis de datos mejorado
+- **Estructura normalizada**: Cada campo dinámico se guarda como registro individual
+- **Compatibilidad SQLite/MySQL**: Funciona en ambos tipos de base de datos
+- **Métodos de consulta**: Nuevos métodos para recuperar y analizar campos dinámicos
+
+#### Funcionalidades Implementadas
+
+##### **1. ✅ Nueva Tabla `wp_xpsocial_dynamic_fields`**:
+```sql
+-- SQLite
+CREATE TABLE wp_xpsocial_dynamic_fields (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    lead_id INTEGER NOT NULL,
+    field_name TEXT NOT NULL,
+    field_value TEXT,
+    field_type TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (lead_id) REFERENCES wp_xpsocial_leads(id) ON DELETE CASCADE
+);
+
+-- MySQL
+CREATE TABLE wp_xpsocial_dynamic_fields (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    lead_id BIGINT(20) UNSIGNED NOT NULL,
+    field_name VARCHAR(100) NOT NULL,
+    field_value TEXT,
+    field_type VARCHAR(50),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY lead_id (lead_id),
+    KEY field_name (field_name),
+    FOREIGN KEY (lead_id) REFERENCES wp_xpsocial_leads(id) ON DELETE CASCADE
+);
+```
+
+##### **2. ✅ Método `save_dynamic_fields()`**:
+```php
+private function save_dynamic_fields($lead_id, $dynamic_fields, $form_config = null)
+{
+    // Guarda cada campo dinámico como registro individual
+    foreach ($dynamic_fields as $field_name => $field_value) {
+        $field_data = array(
+            'lead_id' => $lead_id,
+            'field_name' => sanitize_text_field($field_name),
+            'field_value' => sanitize_text_field($field_value),
+            'field_type' => sanitize_text_field($field_type)
+        );
+        $wpdb->insert($this->dynamic_fields_table, $field_data);
+    }
+}
+```
+
+##### **3. ✅ Método `get_dynamic_fields()`**:
+```php
+public function get_dynamic_fields($lead_id)
+{
+    // Recupera todos los campos dinámicos de un lead específico
+    $results = $wpdb->get_results($wpdb->prepare(
+        "SELECT field_name, field_value, field_type FROM {$this->dynamic_fields_table} WHERE lead_id = %d",
+        $lead_id
+    ));
+    
+    $dynamic_fields = array();
+    foreach ($results as $row) {
+        $dynamic_fields[$row->field_name] = array(
+            'value' => $row->field_value,
+            'type' => $row->field_type
+        );
+    }
+    return $dynamic_fields;
+}
+```
+
+##### **4. ✅ Método `get_leads_with_dynamic_fields()`**:
+```php
+public function get_leads_with_dynamic_fields($args = array())
+{
+    // Obtiene leads con sus campos dinámicos incluidos
+    $leads = $wpdb->get_results($sql);
+    
+    foreach ($leads as $lead) {
+        $lead->dynamic_fields = $this->get_dynamic_fields($lead->id);
+    }
+    
+    return $leads;
+}
+```
+
+#### Ventajas del Nuevo Sistema
+
+| Aspecto | Antes (JSON) | Después (Tabla Separada) |
+|---------|--------------|--------------------------|
+| **Consultas** | Difícil filtrar por campo específico | Fácil consulta por campo |
+| **Análisis** | Requiere parsing de JSON | Consultas SQL directas |
+| **Rendimiento** | Carga todo el JSON | Carga solo campos necesarios |
+| **Escalabilidad** | Limitado por tamaño de JSON | Sin límites de campos |
+| **Índices** | No se pueden indexar campos | Índices en field_name y lead_id |
+
+#### Ejemplos de Uso
+
+##### **Consultar por Campo Específico**:
+```sql
+-- Buscar todos los leads que respondieron "Rojo" al campo "color_favorito"
+SELECT l.*, df.field_value 
+FROM wp_xpsocial_leads l
+JOIN wp_xpsocial_dynamic_fields df ON l.id = df.lead_id
+WHERE df.field_name = 'color_favorito' AND df.field_value = 'Rojo';
+```
+
+##### **Análisis de Respuestas**:
+```sql
+-- Contar respuestas por opción en un campo select
+SELECT field_value, COUNT(*) as count
+FROM wp_xpsocial_dynamic_fields
+WHERE field_name = 'color_favorito'
+GROUP BY field_value
+ORDER BY count DESC;
+```
+
+##### **Leads con Campos Dinámicos**:
+```php
+// Obtener leads con sus campos dinámicos
+$leads_manager = Xpsocial_Leads_Manager::get_instance();
+$leads = $leads_manager->get_leads_with_dynamic_fields(array(
+    'source' => 'formulario_audio_2025',
+    'limit' => 10
+));
+
+foreach ($leads as $lead) {
+    echo "Lead: " . $lead->FirstName . " " . $lead->LastName . "\n";
+    foreach ($lead->dynamic_fields as $field_name => $field_data) {
+        echo "  {$field_name}: {$field_data['value']} ({$field_data['type']})\n";
+    }
+}
+```
+
+#### Migración Automática
+
+- **✅ Compatibilidad**: Los campos dinámicos se siguen guardando en JSON en la tabla principal (retrocompatibilidad)
+- **✅ Doble Guardado**: Se guardan tanto en JSON como en tabla separada
+- **✅ Sin Pérdida**: No se pierden datos existentes
+- **✅ Migración Gradual**: Se puede migrar datos existentes cuando sea necesario
+
+#### Beneficios de la Implementación
+
+1. **✅ Consultas Eficientes**: Fácil filtrar y analizar campos específicos
+2. **✅ Escalabilidad**: Sin límites en número de campos dinámicos
+3. **✅ Análisis Avanzado**: Consultas SQL complejas para reportes
+4. **✅ Índices Optimizados**: Mejor rendimiento en consultas
+5. **✅ Estructura Normalizada**: Base de datos más limpia y organizada
+6. **✅ Retrocompatibilidad**: No rompe funcionalidad existente
+
+## [3.1.34] - 2025-10-15
+
+### Bloqueo de Envío de Formulario con Errores de Validación
+- **Prevención de envío**: El formulario no se puede enviar si hay errores de validación
+- **Validación robusta**: Verifica tanto el estado actual como realiza validaciones frescas
+- **Resumen de errores**: Muestra todos los errores de validación en un panel destacado
+- **UX mejorada**: Limpia automáticamente los errores cuando el usuario empieza a corregir
+- **Scroll automático**: Lleva al usuario al inicio del formulario cuando hay errores
+
+#### Funcionalidades Implementadas
+
+##### **1. ✅ Prevención de Envío**:
+```javascript
+form.on('submit', async function(e) {
+    e.preventDefault(); // Prevent default submission first
+    
+    // Check current validation state first
+    if (validationState.email.valid === false) {
+        isValid = false;
+        validationErrors.push('Email: ' + validationState.email.message);
+    }
+    
+    // If current state is valid, perform fresh validation
+    if (isValid) {
+        if (email && VALIDATION_CONFIG.validateEmail) {
+            const emailValid = await validateEmail(email, source);
+            if (!emailValid) {
+                isValid = false;
+                validationErrors.push('Email: ' + validationState.email.message);
+            }
+        }
+    }
+    
+    if (!isValid) {
+        showValidationErrors(validationErrors);
+        return false;
+    }
+    
+    // If all validations pass, submit the form
+    form.off('submit');
+    form[0].submit();
+});
+```
+
+##### **2. ✅ Resumen de Errores Visual**:
+```javascript
+function showValidationErrors(errors) {
+    const errorHtml = `
+        <div class="validation-errors-summary" style="
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 14px;
+        ">
+            <strong>Por favor corrige los siguientes errores:</strong>
+            <ul style="margin: 10px 0 0 20px; padding: 0;">
+                ${errors.map(error => `<li>${error}</li>`).join('')}
+            </ul>
+        </div>
+    `;
+    
+    $('.xpsocial-form').prepend(errorHtml);
+    
+    // Scroll to top of form
+    $('html, body').animate({
+        scrollTop: $('.xpsocial-form').offset().top - 100
+    }, 500);
+}
+```
+
+##### **3. ✅ Limpieza Automática de Errores**:
+```javascript
+// Email validation
+$('[name="field_email"]').on('blur input', function() {
+    // Clear validation errors summary when user starts typing
+    $('.validation-errors-summary').remove();
+    
+    const email = $(this).val().trim();
+    if (email) {
+        debouncedEmailValidation(email, source);
+    } else {
+        clearFieldError('field_email');
+        validationState.email = { valid: null, message: '' };
+    }
+});
+```
+
+#### Flujo de Validación Mejorado
+
+1. **✅ Usuario intenta enviar**: Se previene el envío por defecto
+2. **✅ Verificación de estado**: Se revisa el estado actual de validación
+3. **✅ Validación fresca**: Si el estado es válido, se realizan validaciones nuevas
+4. **✅ Bloqueo de envío**: Si hay errores, se muestra resumen y se bloquea envío
+5. **✅ Corrección de errores**: Usuario corrige y los errores se limpian automáticamente
+6. **✅ Envío exitoso**: Solo se envía cuando todas las validaciones pasan
+
+#### Estados de Validación
+
+| Estado | Descripción | Acción |
+|--------|-------------|--------|
+| **`valid: null`** | No validado aún | Permite envío (se validará) |
+| **`valid: true`** | Validación exitosa | Permite envío |
+| **`valid: false`** | Error de validación | Bloquea envío |
+
+#### Beneficios de la Implementación
+
+1. **✅ Prevención de datos inválidos**: No se envían formularios con errores
+2. **✅ Feedback claro**: Usuario ve exactamente qué debe corregir
+3. **✅ UX intuitiva**: Errores se limpian automáticamente al corregir
+4. **✅ Validación doble**: Estado actual + validación fresca
+5. **✅ Scroll automático**: Lleva al usuario a los errores
+6. **✅ Configuración respetada**: Solo valida campos habilitados en el CPT
+
+#### Casos de Uso
+
+##### **Caso 1: Email Duplicado**
+- Usuario ingresa email existente
+- Validación en tiempo real muestra error
+- Al intentar enviar: "Email: Este email ya está registrado para esta campaña"
+- Formulario no se envía hasta corregir
+
+##### **Caso 2: Edad Insuficiente**
+- Usuario selecciona fecha que da menos de 18 años
+- Validación en tiempo real muestra error
+- Al intentar enviar: "Birth Date: Debes ser mayor de 18 años para registrarte"
+- Formulario no se envía hasta corregir
+
+##### **Caso 3: Múltiples Errores**
+- Usuario tiene email duplicado + edad insuficiente
+- Al intentar enviar se muestra:
+  ```
+  Por favor corrige los siguientes errores:
+  • Email: Este email ya está registrado para esta campaña
+  • Birth Date: Debes ser mayor de 18 años para registrarte
+  ```
+
 *Última actualización: $(date)*

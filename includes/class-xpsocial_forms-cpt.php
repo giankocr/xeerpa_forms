@@ -18,6 +18,43 @@ class Xpsocial_Forms_CPT
         add_filter('manage_xpsocial_form_posts_columns', array($this, 'custom_columns'));
         add_action('manage_xpsocial_form_posts_custom_column', array($this, 'custom_column_content'), 10, 2);
         add_action('admin_enqueue_scripts', array($this, 'prevent_external_assets'));
+        add_action('admin_head', array($this, 'add_admin_styles'));
+    }
+
+    /**
+     * Agregar estilos CSS para la administración
+     */
+    public function add_admin_styles()
+    {
+        $screen = get_current_screen();
+        if ($screen && $screen->post_type === 'xpsocial_form') {
+            ?>
+            <style>
+            /* Estilos para la columna de acciones */
+            .wp-list-table .column-actions {
+                width: 120px;
+            }
+            
+            .wp-list-table .column-actions .button {
+                margin: 2px;
+                padding: 4px 8px;
+                font-size: 11px;
+                line-height: 1.4;
+                min-height: auto;
+            }
+            
+            .wp-list-table .column-actions .button[style*="color: #a00"] {
+                border-color: #dc3232;
+                color: #dc3232 !important;
+            }
+            
+            .wp-list-table .column-actions .button[style*="color: #a00"]:hover {
+                background: #dc3232;
+                color: #fff !important;
+            }
+            </style>
+            <?php
+        }
     }
 
     /**
@@ -437,6 +474,12 @@ class Xpsocial_Forms_CPT
         $show_terms = get_post_meta($post->ID, '_xpsocial_show_terms', true);
         $show_privacy = get_post_meta($post->ID, '_xpsocial_show_privacy', true);
         
+        // Validation settings
+        $validate_email = get_post_meta($post->ID, '_xpsocial_validate_email', true);
+        $validate_id_number = get_post_meta($post->ID, '_xpsocial_validate_id_number', true);
+        $validate_age = get_post_meta($post->ID, '_xpsocial_validate_age', true);
+        $min_age = get_post_meta($post->ID, '_xpsocial_min_age', true) ?: 18;
+        
         ?>
         <table class="form-table">
             <tr>
@@ -486,6 +529,38 @@ class Xpsocial_Forms_CPT
                 <td>
                     <input type="checkbox" id="xpsocial_show_privacy" name="xpsocial_show_privacy" value="1" <?php checked($show_privacy, '1'); ?> />
                     <label for="xpsocial_show_privacy">Mostrar checkbox de política de privacidad</label>
+                </td>
+            </tr>
+        </table>
+        
+        <h3>Configuración de Validaciones</h3>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="xpsocial_validate_email">Validar Email</label></th>
+                <td>
+                    <input type="checkbox" id="xpsocial_validate_email" name="xpsocial_validate_email" value="1" <?php checked($validate_email, '1'); ?> />
+                    <label for="xpsocial_validate_email">Validar que el email no esté duplicado para esta campaña</label>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="xpsocial_validate_id_number">Validar ID Number</label></th>
+                <td>
+                    <input type="checkbox" id="xpsocial_validate_id_number" name="xpsocial_validate_id_number" value="1" <?php checked($validate_id_number, '1'); ?> />
+                    <label for="xpsocial_validate_id_number">Validar que el número de identificación no esté duplicado para esta campaña</label>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="xpsocial_validate_age">Validar Edad</label></th>
+                <td>
+                    <input type="checkbox" id="xpsocial_validate_age" name="xpsocial_validate_age" value="1" <?php checked($validate_age, '1'); ?> />
+                    <label for="xpsocial_validate_age">Validar edad mínima del usuario</label>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="xpsocial_min_age">Edad Mínima</label></th>
+                <td>
+                    <input type="number" id="xpsocial_min_age" name="xpsocial_min_age" value="<?php echo esc_attr($min_age); ?>" min="1" max="100" class="small-text" />
+                    <p class="description">Edad mínima requerida (por defecto: 18 años)</p>
                 </td>
             </tr>
         </table>
@@ -555,10 +630,11 @@ class Xpsocial_Forms_CPT
                                 </tr>
                                 <tr>
                                     <th scope="row"><label>Opciones (para select, radio, checkbox)</label></th>
-                                    <td>
-                                        <textarea name="fields[<?php echo $index; ?>][options]" rows="3" cols="50" class="large-text"><?php echo esc_textarea($field['options']); ?></textarea>
-                                        <p class="description">Una opción por línea</p>
-                                    </td>
+                            <td>
+                                <?php $options_value = is_array($field['options']) ? implode("\n", $field['options']) : (string)$field['options']; ?>
+                                <textarea name="fields[<?php echo $index; ?>][options]" rows="3" cols="50" class="large-text"><?php echo esc_textarea($options_value); ?></textarea>
+                                <p class="description">Una opción por línea</p>
+                            </td>
                                 </tr>
                             </table>
                         </div>
@@ -686,7 +762,11 @@ class Xpsocial_Forms_CPT
             '_xpsocial_marca',
             '_xpsocial_country',
             '_xpsocial_show_terms',
-            '_xpsocial_show_privacy'
+            '_xpsocial_show_privacy',
+            '_xpsocial_validate_email',
+            '_xpsocial_validate_id_number',
+            '_xpsocial_validate_age',
+            '_xpsocial_min_age'
         );
 
         foreach ($fields_to_save as $field) {
@@ -696,7 +776,7 @@ class Xpsocial_Forms_CPT
                 update_post_meta($post_id, $field, $value);
             } else {
                 // Para checkboxes, si no están presentes, significa que están desmarcados
-                if (in_array($field, ['_xpsocial_fifco_enabled', '_xpsocial_show_terms', '_xpsocial_show_privacy'])) {
+                if (in_array($field, ['_xpsocial_fifco_enabled', '_xpsocial_show_terms', '_xpsocial_show_privacy', '_xpsocial_validate_email', '_xpsocial_validate_id_number', '_xpsocial_validate_age'])) {
                     update_post_meta($post_id, $field, '0');
                 } else {
                     delete_post_meta($post_id, $field);
@@ -709,18 +789,35 @@ class Xpsocial_Forms_CPT
             $fields = array();
             foreach ($_POST['fields'] as $field) {
                 if (!empty($field['label']) && !empty($field['name'])) {
+                    // Properly handle UTF-8 encoding for dynamic field labels and options
+                    $label = html_entity_decode($field['label'], ENT_QUOTES, 'UTF-8');
+                    $options_raw = isset($field['options']) ? html_entity_decode($field['options'], ENT_QUOTES, 'UTF-8') : '';
+                    $placeholder = isset($field['placeholder']) ? html_entity_decode($field['placeholder'], ENT_QUOTES, 'UTF-8') : '';
+
+                    // Normalize options to array for select/radio/checkbox
+                    $options_array = array();
+                    if (!empty($options_raw)) {
+                        $lines = preg_split("/\r\n|\r|\n/", $options_raw);
+                        foreach ($lines as $opt) {
+                            $opt = trim($opt);
+                            if ($opt !== '') {
+                                $options_array[] = sanitize_text_field($opt);
+                            }
+                        }
+                    }
+
                     $fields[] = array(
-                        'label' => sanitize_text_field($field['label']),
+                        'label' => sanitize_text_field($label),
                         'name' => sanitize_text_field($field['name']),
                         'type' => sanitize_text_field($field['type']),
                         'required' => isset($field['required']) ? '1' : '0',
-                        'options' => sanitize_textarea_field($field['options']),
-                        'placeholder' => sanitize_text_field($field['placeholder'])
+                        'options' => in_array($field['type'], array('select','radio','checkbox'), true) ? $options_array : sanitize_textarea_field($options_raw),
+                        'placeholder' => sanitize_text_field($placeholder)
                     );
                 }
             }
-            // Guardar como JSON string
-            update_post_meta($post_id, '_xpsocial_dynamic_fields', json_encode($fields));
+            // Guardar como JSON string con codificación UTF-8
+            update_post_meta($post_id, '_xpsocial_dynamic_fields', json_encode($fields, JSON_UNESCAPED_UNICODE));
         } else {
             delete_post_meta($post_id, '_xpsocial_dynamic_fields');
         }
@@ -737,6 +834,7 @@ class Xpsocial_Forms_CPT
         $new_columns['source'] = 'Source';
         $new_columns['marca'] = 'Marca FIFCO';
         $new_columns['dynamic_fields'] = 'Campos Dinámicos';
+        $new_columns['actions'] = 'Acciones';
         $new_columns['date'] = $columns['date'];
         
         return $new_columns;
@@ -768,6 +866,19 @@ class Xpsocial_Forms_CPT
                     echo '0 campos';
                 }
                 break;
+                
+            case 'actions':
+                $delete_url = wp_nonce_url(
+                    admin_url('post.php?post=' . $post_id . '&action=delete'),
+                    'delete-post_' . $post_id
+                );
+                $edit_url = get_edit_post_link($post_id);
+                
+                echo '<div style="display: flex; gap: 5px;">';
+                echo '<a href="' . esc_url($edit_url) . '" class="button button-small">Editar</a>';
+                echo '<a href="' . esc_url($delete_url) . '" class="button button-small" onclick="return confirm(\'¿Estás seguro de que quieres eliminar este formulario? Esta acción no se puede deshacer.\');" style="color: #a00;">Eliminar</a>';
+                echo '</div>';
+                break;
         }
     }
 
@@ -797,6 +908,10 @@ class Xpsocial_Forms_CPT
             'country' => get_post_meta($post->ID, '_xpsocial_country', true),
             'show_terms' => get_post_meta($post->ID, '_xpsocial_show_terms', true),
             'show_privacy' => get_post_meta($post->ID, '_xpsocial_show_privacy', true),
+            'validate_email' => get_post_meta($post->ID, '_xpsocial_validate_email', true),
+            'validate_id_number' => get_post_meta($post->ID, '_xpsocial_validate_id_number', true),
+            'validate_age' => get_post_meta($post->ID, '_xpsocial_validate_age', true),
+            'min_age' => get_post_meta($post->ID, '_xpsocial_min_age', true) ?: 18,
             'dynamic_fields' => array()
         );
 

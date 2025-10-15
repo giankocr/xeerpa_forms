@@ -585,6 +585,64 @@ span.toggle-password {
     opacity: 0.8;
 }
 
+/* Estilos para mensajes de error de validación */
+.xpsocial-form .field-error {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+    animation: fadeInError 0.3s ease-in-out;
+}
+
+.xpsocial-form input.error,
+.xpsocial-form select.error,
+.xpsocial-form textarea.error {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25) !important;
+}
+
+.xpsocial-form input.valid,
+.xpsocial-form select.valid,
+.xpsocial-form textarea.valid {
+    border-color: #28a745 !important;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.25) !important;
+}
+
+@keyframes fadeInError {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading indicator for validation */
+.xpsocial-form .field-validating {
+    position: relative;
+}
+
+.xpsocial-form .field-validating::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007cba;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+}
+
 /* Responsive */
 @media screen and (max-width: 768px) {
     .xpsocial-form .two-columns {
