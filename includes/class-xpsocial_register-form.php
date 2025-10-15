@@ -23,6 +23,15 @@ function after_submission_xeerpa()
         // Email existence check removed - no longer managing WordPress users
         date_default_timezone_set('America/Costa_Rica');
         
+        // Get form source from POST data
+        $form_source = sanitize_text_field($_POST['form_source'] ?? '');
+        
+        // Get form configuration from CPT if source is provided
+        $form_config = null;
+        if (!empty($form_source)) {
+            $form_config = Xpsocial_Forms_CPT::get_form_config_by_source($form_source);
+        }
+        
         // Sanitize and validate input data first (fast operations)
         $it = sanitize_text_field($_POST[ 'field_it' ]);
         $desobfuscatedToken = strtr($it, $obfKey1, $obfKey2);
@@ -39,9 +48,25 @@ function after_submission_xeerpa()
         $sn = sanitize_text_field($_POST[ 'field_sn' ]);
         $password = isset($_POST[ 'field_password' ]) ? sanitize_text_field($_POST[ 'field_password' ]) : $it;
 
-        // Prepare boolean values
-        $robinson = $_POST[ 'field_terms' ] ? 'false' : 'true';
-        $politicaprivacidad = $_POST[ 'field_privacy' ] ? 'true' : 'false';
+        // Prepare boolean values - check means "Sí"
+        $robinson = isset($_POST[ 'field_terms' ]) && $_POST[ 'field_terms' ] === 'si' ? 'false' : 'true';
+        $politicaprivacidad = isset($_POST[ 'field_privacy' ]) && $_POST[ 'field_privacy' ] === 'si' ? 'true' : 'false';
+        
+        // Get dynamic fields data
+        $dynamic_fields_data = array();
+        if ($form_config && !empty($form_config['dynamic_fields'])) {
+            foreach ($form_config['dynamic_fields'] as $field) {
+                $field_name = 'dynamic_' . $field['name'];
+                if (isset($_POST[$field_name])) {
+                    if ($field['type'] === 'checkbox') {
+                        // For checkboxes, we get an array
+                        $dynamic_fields_data[$field['name']] = is_array($_POST[$field_name]) ? implode(', ', $_POST[$field_name]) : $_POST[$field_name];
+                    } else {
+                        $dynamic_fields_data[$field['name']] = sanitize_text_field($_POST[$field_name]);
+                    }
+                }
+            }
+        }
 
         // User creation functionality removed - no longer creating WordPress users
 
@@ -72,9 +97,58 @@ function after_submission_xeerpa()
         $xpsocial_redirect_login = get_option('xpsocial_redirect_login');
         echo '<script> window.location.href = "' . esc_url($xpsocial_redirect_login) . '";</script>';
 
+        // Save lead to database using the leads manager
+        if (class_exists('Xpsocial_Leads_Manager')) {
+            $leads_manager = Xpsocial_Leads_Manager::get_instance();
+            
+            // Prepare lead data
+            $lead_data = array(
+                'FirstName' => $first_name,
+                'LastName' => $last_name,
+                'EmailAddress' => $email,
+                'IDNumber' => $IDCedula,
+                'Gender' => $genero,
+                'BirthDate' => $birthday,
+                'MobileNumber' => $phone,
+                'Province' => $provincia,
+                'Country' => $country,
+                'UserRegisterSocial' => $sn,
+                'CaptureDate' => current_time('Y-m-d H:i:s'),
+                'ModifiedDate' => current_time('Y-m-d H:i:s'),
+                'PoliticasPrivacidad' => $politicaprivacidad === 'true' ? 'Sí' : 'No',
+                'AceptaComunicaciones' => $robinson === 'false' ? 'Sí' : 'No',
+                'snid' => $snid,
+                'it_token' => $it,
+                'id_token' => $desobfuscatedToken,
+                'dynamic_fields' => $dynamic_fields_data
+            );
+            
+            // Add form configuration values if available
+            if ($form_config) {
+                $lead_data['Source'] = $form_config['source'];
+                $lead_data['Marca'] = $form_config['marca'] ?? '';
+                if (!empty($form_config['country'])) {
+                    $lead_data['Country'] = $form_config['country'];
+                }
+            } else {
+                // Fallback values if no form config
+                $lead_data['Source'] = $form_source ?: 'default_form';
+                $lead_data['Marca'] = 'Default';
+            }
+            
+            // Save the lead
+            $lead_id = $leads_manager->save_lead($lead_data);
+            
+            if ($lead_id) {
+                error_log("XPSocial: Lead saved successfully with ID: " . $lead_id);
+            } else {
+                error_log("XPSocial: Failed to save lead");
+            }
+        }
+
         // Start background API calls asynchronously (non-blocking)
         wp_schedule_single_event(time(), 'process_background_api_calls', array(
-            'user_id' => $user_id,
+            'user_id' => 0, // No user ID since we're not creating WordPress users
             'user_data' => array(
                 'email' => $email,
                 'first_name' => $first_name,
@@ -84,11 +158,15 @@ function after_submission_xeerpa()
                 'genero' => $genero,
                 'IDCedula' => $IDCedula,
                 'provincia' => $provincia,
+                'country' => $country,
                 'robinson' => $robinson,
                 'politicaprivacidad' => $politicaprivacidad,
                 'sn' => $sn,
                 'it' => $it,
-                'snid' => $snid
+                'snid' => $snid,
+                'form_config' => $form_config,
+                'form_source' => $form_source,
+                'dynamic_fields' => $dynamic_fields_data
             )
         ));
     }
@@ -201,9 +279,32 @@ function send_data_to_fifco_optimized($data) {
         default: $field_gender = 'No especificado'; break;
     }
 
+    // Get form configuration values
+    $form_config = $data['form_config'] ?? null;
+    $form_source = $data['form_source'] ?? '';
+    
+    // Determine values from form config or fallback to defaults
+    $marca = 'Default';
+    $source = 'default_form';
+    $country = $data['country'] ?? 'Guatemala';
+    
+    if ($form_config) {
+        $marca = $form_config['marca'] ?? 'Default';
+        $source = $form_config['source'] ?? 'default_form';
+        if (!empty($form_config['country'])) {
+            $country = $form_config['country'];
+        }
+    } else if (!empty($form_source)) {
+        $source = $form_source;
+    }
+    
+    // Convert boolean values to Spanish
+    $politicas_privacidad = $data['politicaprivacidad'] === 'true' ? 'Sí' : 'No';
+    $acepta_comunicaciones = $data['robinson'] === 'false' ? 'Sí' : 'No';
+
     try {
         $all_fields =  array(
-            "Marca" => "Kerns",
+            "Marca" => $marca,
             "IDNumber" => $data['IDCedula'],
             "EmailAddress" => $data['email'],
             "FirstName" => $data['first_name'],
@@ -214,13 +315,13 @@ function send_data_to_fifco_optimized($data) {
             "BirthDate" => (new DateTime($data['birthday']))->format('d/m/Y'),
             "MobileNumber" => $data['phone'],
             "Province" => $data['provincia'],
-            "Country" => 'Guatemala',
+            "Country" => $country,
             "UserRegisterSocial" => $data['sn'],
             "CaptureDate" => date('d/m/Y'),
             "ModifiedDate" => date('d/m/Y'),
-            "PoliticasPrivacidad" => 'Sí',
-            "AceptaComunicaciones" => 'Sí',
-            "Source" => "Ker_KetchupLovers_2025"
+            "PoliticasPrivacidad" => $politicas_privacidad,
+            "AceptaComunicaciones" => $acepta_comunicaciones,
+            "Source" => $source
         );
         // 2. Prepara el arreglo que contendrá los objetos con "label" y "value".
         $formatted_fields = [];
@@ -231,6 +332,16 @@ function send_data_to_fifco_optimized($data) {
                 "label" => $label,
                 "value" => $value
             ];
+        }
+        
+        // Add dynamic fields if available
+        if (isset($data['dynamic_fields']) && !empty($data['dynamic_fields'])) {
+            foreach ($data['dynamic_fields'] as $field_name => $field_value) {
+                $formatted_fields[] = [
+                    "label" => ucfirst(str_replace('_', ' ', $field_name)),
+                    "value" => $field_value
+                ];
+            }
         }
 
         // 4. Construye el payload final.

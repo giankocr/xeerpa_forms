@@ -942,6 +942,1407 @@ Los selectores de color ahora tienen:
 
 ---
 
+### Versión 3.1.13 - Mejora del Activador del Plugin
+
+#### Cambios Realizados
+- **Archivo modificado**: `class-xpsocial_login-activator.php`
+- **Acción**: Implementación de creación automática de tabla de base de datos
+- **Fecha**: $(date)
+
+#### Funcionalidades Implementadas
+
+1. **Creación Automática de Tabla**:
+   - **Tabla**: `wp_xpsocial_leads` se crea automáticamente al activar el plugin
+   - **Estructura completa**: Todos los campos necesarios para almacenar leads
+   - **Índices únicos**: Prevención de duplicados por email y source
+   - **Timestamps**: Campos de creación y actualización automáticos
+
+2. **Inicialización de Opciones por Defecto**:
+   - **Configuraciones básicas**: Todas las opciones del plugin con valores por defecto
+   - **Estilos por defecto**: Valores predefinidos para campos de estilo
+   - **Configuraciones FIFCO**: Opciones para integración con FIFCO
+   - **Configuraciones Xeerpa**: Opciones para integración con Xeerpa
+
+3. **Sistema de Logging**:
+   - **Log de activación**: Registro de creación de tabla exitosa
+   - **Log de opciones**: Registro de inicialización de opciones
+   - **Debugging**: Facilita la identificación de problemas
+
+#### Estructura de la Tabla Creada
+
+##### **Tabla: `wp_xpsocial_leads`**
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| **id** | BIGINT(20) UNSIGNED | Clave primaria auto-incremental |
+| **Marca** | VARCHAR(120) | Marca del producto/servicio |
+| **IDNumber** | VARCHAR(100) | Número de identificación del usuario |
+| **EmailAddress** | VARCHAR(190) | Dirección de correo electrónico |
+| **FirstName** | VARCHAR(100) | Primer nombre |
+| **SecondName** | VARCHAR(100) | Segundo nombre |
+| **LastName** | VARCHAR(100) | Primer apellido |
+| **SecondLastName** | VARCHAR(100) | Segundo apellido |
+| **Gender** | VARCHAR(30) | Género del usuario |
+| **BirthDate** | VARCHAR(20) | Fecha de nacimiento |
+| **MobileNumber** | VARCHAR(50) | Número de teléfono móvil |
+| **Province** | VARCHAR(120) | Provincia/estado |
+| **Country** | VARCHAR(120) | País |
+| **UserRegisterSocial** | VARCHAR(50) | Red social de registro |
+| **CaptureDate** | VARCHAR(20) | Fecha de captura |
+| **ModifiedDate** | VARCHAR(20) | Fecha de modificación |
+| **PoliticasPrivacidad** | VARCHAR(5) | Aceptación de políticas de privacidad |
+| **AceptaComunicaciones** | VARCHAR(5) | Aceptación de comunicaciones |
+| **Source** | VARCHAR(180) | Fuente del lead |
+| **snid** | VARCHAR(190) | ID de red social |
+| **it_token** | TEXT | Token de integración |
+| **id_token** | TEXT | Token de identificación |
+| **dynamic_fields** | TEXT | Campos dinámicos adicionales |
+| **created_at** | DATETIME | Fecha de creación (automática) |
+| **updated_at** | DATETIME | Fecha de actualización (automática) |
+
+##### **Índices Únicos**:
+- `uniq_email_source`: Previene duplicados por email y source
+- `uniq_id_source`: Previene duplicados por ID y source
+
+#### Opciones por Defecto Inicializadas
+
+##### **Configuraciones Básicas**:
+- `xpsocial_licencia`: Licencia de uso
+- `xpsocial_urlSocial`: URL de Xeerpa Social
+- `xpsocial_urlForm`: URL de Xeerpa Form
+- `xpsocial_authToken`: Token de autenticación
+- `xpsocial_clientId`: ID del cliente
+- `xpsocial_clientPwd`: Contraseña del cliente
+- `xpsocial_appId`: ID de la aplicación
+
+##### **URLs de Redirección**:
+- `xpsocial_redirect_login`: URL de redirección de login
+- `xpsocial_redirect_to_registro`: URL de redirección de registro
+- `xpsocial_redirect_existing_user`: URL para usuarios existentes
+
+##### **Configuraciones de Marca**:
+- `xpsocial_marca`: Marca del sitio
+- `xpsocial_linkPP`: Link de políticas de privacidad
+- `xpsocial_linkTyC`: Link de términos y condiciones
+- `xpsocial_lost_password_url`: URL de recuperación de contraseña
+
+##### **Configuraciones FIFCO**:
+- `fifco_api_url`: URL del API de FIFCO
+- `fifco_api_token`: Token del API de FIFCO
+
+##### **Estilos por Defecto**:
+- `xp_input_height`: 40px
+- `xp_input_border`: 1px solid #ced4da
+- `xp_input_border_radius`: 6px
+- `xp_bg_color`: #ffffff
+- `xp_div_color`: #f8f9fa
+- `xp_font_color`: #495057
+- `xp_divisor_color`: #e9ecef
+- `xp_btn_height`: 40px
+- `xp_btn_width`: 100px
+- `xp_btn_color`: #ffffff
+- `xp_btn_bgcolor`: #007cba
+- `xp_btn_border_width`: 1px
+- `xp_btn_border_color`: #007cba
+- `xp_btn_border_radius`: 6px
+
+#### Beneficios de la Mejora
+
+1. **Instalación Automática**:
+   - ✅ **Tabla creada automáticamente**: No requiere intervención manual
+   - ✅ **Estructura optimizada**: Campos apropiados para almacenar leads
+   - ✅ **Índices únicos**: Previene duplicados automáticamente
+   - ✅ **Compatibilidad**: Funciona con cualquier charset de WordPress
+
+2. **Configuración Inicial**:
+   - ✅ **Opciones predefinidas**: Valores por defecto sensatos
+   - ✅ **Estilos listos**: Configuración visual preestablecida
+   - ✅ **Configuraciones FIFCO**: Preparado para integración
+   - ✅ **Configuraciones Xeerpa**: Preparado para integración
+
+3. **Mantenimiento y Debugging**:
+   - ✅ **Logging automático**: Registro de operaciones exitosas
+   - ✅ **Flags de activación**: Control de estado del plugin
+   - ✅ **Fechas de activación**: Historial de instalaciones
+   - ✅ **Debugging facilitado**: Logs para identificar problemas
+
+#### Código Implementado
+
+##### **Función de Activación**:
+```php
+public static function activate()
+{
+    // Create custom table for leads
+    self::create_custom_table();
+    
+    // Initialize default options
+    self::init_default_options();
+    
+    // Set activation flag
+    update_option('xpsocial_plugin_activated', true);
+    update_option('xpsocial_activation_date', current_time('mysql'));
+}
+```
+
+##### **Creación de Tabla**:
+```php
+private static function create_custom_table()
+{
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'xpsocial_leads';
+    $charset_collate = $wpdb->get_charset_collate();
+    
+    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+    
+    $sql = "CREATE TABLE {$table_name} (
+        id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+        // ... estructura completa de la tabla
+        PRIMARY KEY (id)
+    ) {$charset_collate};";
+    
+    dbDelta($sql);
+}
+```
+
+#### Resultado Final
+
+Al activar el plugin ahora se ejecuta automáticamente:
+
+- ✅ **Creación de tabla**: `wp_xpsocial_leads` con estructura completa
+- ✅ **Inicialización de opciones**: Todas las configuraciones con valores por defecto
+- ✅ **Configuración de estilos**: Valores predefinidos para personalización
+- ✅ **Logging de operaciones**: Registro de todas las operaciones exitosas
+- ✅ **Flags de estado**: Control del estado de activación del plugin
+
+---
+
+### Versión 3.1.14 - Custom Post Type para Formularios Dinámicos
+
+#### Cambios Realizados
+- **Archivos creados**: 
+  - `class-xpsocial_forms-cpt.php` - Custom Post Type para formularios
+  - `class-xpsocial_leads-manager.php` - Manager para la tabla de leads
+  - `register-form-dynamic.html` - Template de formulario dinámico
+- **Archivo modificado**: `xpsocial_login.php` - Inclusión del CPT
+- **Acción**: Implementación de sistema completo de formularios dinámicos
+- **Fecha**: $(date)
+
+#### Funcionalidades Implementadas
+
+1. **Custom Post Type para Formularios**:
+   - **Tipo**: `xpsocial_form` - Formularios dinámicos configurables
+   - **Menú de administración**: "Formularios XP Social" en el admin de WordPress
+   - **Configuración completa**: Source, marca FIFCO, campos dinámicos
+   - **Interfaz intuitiva**: Meta boxes para configuración fácil
+
+2. **Sistema de Campos Dinámicos**:
+   - **Tipos de campo**: Texto, textarea, select, radio, checkbox, audio, imagen
+   - **Configuración flexible**: Etiquetas, placeholders, opciones, validación
+   - **Campos requeridos**: Sistema de validación por campo
+   - **Opciones múltiples**: Para select, radio y checkbox
+
+3. **Integración con FIFCO**:
+   - **Marca configurable**: Campo específico para marca FIFCO
+   - **Source personalizable**: Identificador único por formulario
+   - **País específico**: Configuración de país por formulario
+   - **API habilitada**: Checkbox para activar integración FIFCO
+
+4. **Manager de Leads**:
+   - **Guardado automático**: Datos se guardan en `wp_xpsocial_leads`
+   - **Validación de duplicados**: Prevención de registros duplicados
+   - **Campos dinámicos**: Almacenamiento JSON de campos personalizados
+   - **Estadísticas**: Métodos para obtener estadísticas de leads
+
+#### Estructura del Custom Post Type
+
+##### **Tipo de Post: `xpsocial_form`**
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| **ID** | INT | ID único del formulario |
+| **post_title** | VARCHAR | Título del formulario |
+| **post_content** | TEXT | Descripción del formulario |
+| **post_status** | VARCHAR | Estado del formulario (publish, draft, etc.) |
+
+##### **Meta Fields del Formulario**:
+
+| Meta Key | Tipo | Descripción |
+|----------|------|-------------|
+| **`_xpsocial_source`** | VARCHAR | Identificador único del formulario |
+| **`_xpsocial_success_html`** | TEXT | HTML de mensaje de éxito |
+| **`_xpsocial_fifco_enabled`** | BOOLEAN | Habilitar integración FIFCO |
+| **`_xpsocial_marca`** | VARCHAR | Marca FIFCO específica |
+| **`_xpsocial_country`** | VARCHAR | País específico del formulario |
+| **`_xpsocial_show_terms`** | BOOLEAN | Mostrar términos y condiciones |
+| **`_xpsocial_show_privacy`** | BOOLEAN | Mostrar política de privacidad |
+| **`_xpsocial_dynamic_fields`** | JSON | Campos dinámicos del formulario |
+
+#### Configuración de Campos Dinámicos
+
+##### **Tipos de Campo Disponibles**:
+
+1. **Texto (`text`)**:
+   - Campo de entrada de texto simple
+   - Validación de patrón opcional
+   - Placeholder personalizable
+
+2. **Área de Texto (`textarea`)**:
+   - Campo de texto multilínea
+   - Ideal para comentarios o descripciones
+   - Placeholder personalizable
+
+3. **Lista Desplegable (`select`)**:
+   - Opciones predefinidas
+   - Una opción por línea en configuración
+   - Placeholder para opción por defecto
+
+4. **Botones de Radio (`radio`)**:
+   - Selección única de opciones
+   - Una opción por línea en configuración
+   - Validación de campo requerido
+
+5. **Casillas de Verificación (`checkbox`)**:
+   - Selección múltiple de opciones
+   - Una opción por línea en configuración
+   - Array de valores en envío
+
+6. **Audio (`audio`)**:
+   - Subida de archivos de audio
+   - Formatos permitidos: MP3, WAV, OGG
+   - Validación de tipo de archivo
+
+7. **Imagen (`image`)**:
+   - Subida de archivos de imagen
+   - Formatos permitidos: JPG, PNG, GIF
+   - Validación de tipo de archivo
+
+##### **Configuración por Campo**:
+
+| Propiedad | Tipo | Descripción |
+|-----------|------|-------------|
+| **label** | VARCHAR | Etiqueta visible del campo |
+| **name** | VARCHAR | Nombre del campo (sin espacios) |
+| **type** | VARCHAR | Tipo de campo (text, textarea, etc.) |
+| **required** | BOOLEAN | Campo obligatorio |
+| **placeholder** | VARCHAR | Texto de placeholder |
+| **options** | TEXT | Opciones (una por línea) |
+
+#### Manager de Leads
+
+##### **Métodos Principales**:
+
+1. **`save_lead($data)`**:
+   - Guarda un nuevo lead en la tabla
+   - Valida datos requeridos (EmailAddress o IDNumber + Source)
+   - Sanitiza todos los datos de entrada
+   - Retorna ID del lead o false en caso de error
+
+2. **`get_lead($lead_id)`**:
+   - Obtiene un lead por ID
+   - Decodifica campos dinámicos JSON
+   - Retorna objeto del lead o null
+
+3. **`get_leads_by_source($source, $limit, $offset)`**:
+   - Obtiene leads por source específico
+   - Soporte para paginación
+   - Ordenados por fecha de creación descendente
+
+4. **`get_leads_by_email($email)`**:
+   - Obtiene todos los leads con un email específico
+   - Útil para verificar duplicados
+   - Ordenados por fecha de creación descendente
+
+5. **`get_leads_stats($source)`**:
+   - Obtiene estadísticas de leads
+   - Total de leads, por source, por marca, por país
+   - Leads recientes (últimos 30 días)
+
+6. **`update_lead($lead_id, $data)`**:
+   - Actualiza un lead existente
+   - Actualiza fecha de modificación automáticamente
+   - Valida campos permitidos
+
+7. **`delete_lead($lead_id)`**:
+   - Elimina un lead por ID
+   - Log de operación para auditoría
+
+8. **`lead_exists($email, $source)`**:
+   - Verifica si existe un lead con email y source específicos
+   - Útil para prevenir duplicados
+
+#### Template de Formulario Dinámico
+
+##### **Características del Template**:
+
+1. **Campos Base**:
+   - Nombre y apellidos (requeridos)
+   - Email (validación de formato)
+   - Fecha de nacimiento (requerida)
+   - Género (requerido)
+   - Teléfono con código de país (requerido)
+   - Cédula/identificación (requerida)
+   - País y provincia (requeridos)
+
+2. **Campos Dinámicos**:
+   - Renderizado automático según configuración
+   - Validación según tipo de campo
+   - Estilos consistentes con formulario base
+
+3. **Términos y Privacidad**:
+   - Checkbox de términos y condiciones (opcional)
+   - Checkbox de política de privacidad (opcional)
+   - Marca dinámica en texto de privacidad
+
+4. **Campos Ocultos**:
+   - Source del formulario
+   - Tokens de integración
+   - Nonce de seguridad
+
+#### Integración con Tabla de Leads
+
+##### **Mapeo de Datos**:
+
+| Campo Formulario | Campo Tabla | Descripción |
+|------------------|-------------|-------------|
+| `field_firstname` | `FirstName` | Primer nombre |
+| `field_lastname` | `LastName` | Apellidos |
+| `field_email` | `EmailAddress` | Email del usuario |
+| `field_birthday` | `BirthDate` | Fecha de nacimiento |
+| `field_gender` | `Gender` | Género del usuario |
+| `field_phone` | `MobileNumber` | Número de teléfono |
+| `field_id` | `IDNumber` | Número de identificación |
+| `field_country` | `Country` | País seleccionado |
+| `field_province` | `Province` | Provincia seleccionada |
+| `form_source` | `Source` | Source del formulario |
+| `dynamic_*` | `dynamic_fields` | Campos dinámicos (JSON) |
+| `field_terms` | `PoliticasPrivacidad` | Aceptación de términos |
+| `field_privacy` | `AceptaComunicaciones` | Aceptación de comunicaciones |
+
+##### **Proceso de Guardado**:
+
+1. **Validación**: Verificar campos requeridos
+2. **Sanitización**: Limpiar todos los datos de entrada
+3. **Campos dinámicos**: Convertir a JSON para almacenamiento
+4. **Inserción**: Guardar en tabla `wp_xpsocial_leads`
+5. **Logging**: Registrar operación exitosa o errores
+
+#### Interfaz de Administración
+
+##### **Menú Principal**:
+- **"Formularios XP Social"**: Menú principal con icono de feedback
+- **"Todos los Formularios"**: Lista de formularios existentes
+- **"Agregar Nuevo"**: Crear nuevo formulario
+
+##### **Lista de Formularios**:
+- **Título**: Nombre del formulario
+- **Source**: Identificador único
+- **Marca FIFCO**: Marca configurada
+- **Campos Dinámicos**: Número de campos personalizados
+- **Acciones**: Editar y ver formulario
+
+##### **Editor de Formulario**:
+- **Meta Box de Configuración**: Source, mensaje de éxito, FIFCO, marca, país
+- **Meta Box de Campos Dinámicos**: Agregar/editar campos personalizados
+- **Interfaz drag-and-drop**: Para reordenar campos
+- **Validación en tiempo real**: Para configuración correcta
+
+#### Beneficios del Sistema
+
+1. **Flexibilidad Total**:
+   - ✅ **Formularios personalizables**: Cada formulario puede tener campos únicos
+   - ✅ **Configuración por formulario**: Source, marca, país específicos
+   - ✅ **Tipos de campo variados**: Desde texto simple hasta archivos
+   - ✅ **Validación personalizable**: Campos requeridos por formulario
+
+2. **Integración FIFCO**:
+   - ✅ **Marca específica**: Cada formulario puede tener su marca FIFCO
+   - ✅ **Source único**: Identificador para tracking y análisis
+   - ✅ **País configurable**: Para formularios específicos por región
+   - ✅ **API habilitada**: Integración opcional con FIFCO
+
+3. **Gestión de Leads**:
+   - ✅ **Almacenamiento centralizado**: Todos los leads en una tabla
+   - ✅ **Prevención de duplicados**: Validación por email y source
+   - ✅ **Campos dinámicos**: Almacenamiento flexible de datos personalizados
+   - ✅ **Estadísticas**: Métodos para análisis de leads
+
+4. **Experiencia de Usuario**:
+   - ✅ **Interfaz intuitiva**: Configuración fácil en WordPress admin
+   - ✅ **Validación robusta**: Campos requeridos y formatos correctos
+   - ✅ **Mensajes personalizados**: HTML personalizable para éxito
+   - ✅ **Términos configurables**: Mostrar/ocultar según necesidad
+
+#### Código Implementado
+
+##### **Inicialización del CPT**:
+```php
+// Initialize Custom Post Type for forms
+new Xpsocial_Forms_CPT();
+
+// Initialize Leads Manager
+Xpsocial_Leads_Manager::get_instance();
+```
+
+##### **Configuración de Formulario**:
+```php
+$config = array(
+    'source' => 'mi_formulario_2025',
+    'success_html' => '<h2>¡Registro exitoso!</h2>',
+    'fifco_enabled' => '1',
+    'marca' => 'Imperial',
+    'country' => 'Costa Rica',
+    'show_terms' => '1',
+    'show_privacy' => '1',
+    'dynamic_fields' => array(
+        array(
+            'label' => 'Preferencia de contacto',
+            'name' => 'preferencia_contacto',
+            'type' => 'select',
+            'required' => '1',
+            'options' => "Email\nTeléfono\nWhatsApp",
+            'placeholder' => 'Seleccione su preferencia'
+        )
+    )
+);
+```
+
+##### **Guardado de Lead**:
+```php
+$leads_manager = Xpsocial_Leads_Manager::get_instance();
+$lead_id = $leads_manager->save_lead(array(
+    'FirstName' => 'Juan',
+    'LastName' => 'Pérez',
+    'EmailAddress' => 'juan@ejemplo.com',
+    'Source' => 'mi_formulario_2025',
+    'Marca' => 'Imperial',
+    'dynamic_fields' => array(
+        'preferencia_contacto' => 'Email'
+    )
+));
+```
+
+#### Resultado Final
+
+El sistema ahora incluye:
+
+- ✅ **Custom Post Type completo**: Para gestión de formularios dinámicos
+- ✅ **Sistema de campos flexibles**: 7 tipos de campo diferentes
+- ✅ **Integración FIFCO**: Marca, source y país configurables
+- ✅ **Manager de leads robusto**: CRUD completo con validaciones
+- ✅ **Template de formulario**: Renderizado dinámico de campos
+- ✅ **Interfaz de administración**: Fácil configuración en WordPress
+- ✅ **Almacenamiento en tabla**: Integración con `wp_xpsocial_leads`
+- ✅ **Prevención de duplicados**: Validación por email y source
+- ✅ **Estadísticas**: Métodos para análisis de leads
+- ✅ **Logging completo**: Para debugging y auditoría
+
+---
+
+### Versión 3.1.15 - Integración del Formulario de Registro con CPT
+
+#### Cambios Realizados
+- **Archivo modificado**: `class-xpsocial_register-form.php`
+- **Acción**: Integración completa del formulario de registro con el Custom Post Type
+- **Fecha**: $(date)
+
+#### Funcionalidades Implementadas
+
+1. **Integración con CPT**:
+   - **Obtención de configuración**: El formulario ahora obtiene la configuración del CPT basada en el `form_source`
+   - **Valores dinámicos**: Source, Marca, País se toman desde la configuración del formulario
+   - **Campos dinámicos**: Procesamiento y almacenamiento de campos personalizados del formulario
+
+2. **Mapeo Correcto de Datos del Usuario**:
+   - **Provincia**: Se toma del campo `field_province` del formulario
+   - **País**: Se toma del campo `field_country` del formulario o de la configuración del CPT
+   - **Políticas de Privacidad**: Checkbox marcado = "Sí", desmarcado = "No"
+   - **Términos y Condiciones**: Checkbox marcado = "Sí", desmarcado = "No"
+
+3. **Guardado en Tabla de Leads**:
+   - **Integración con Leads Manager**: Los datos se guardan automáticamente en `wp_xpsocial_leads`
+   - **Campos dinámicos**: Almacenamiento JSON de campos personalizados
+   - **Validación de duplicados**: Prevención de registros duplicados por email y source
+
+4. **Envío a FIFCO API**:
+   - **Valores del CPT**: Source y Marca se toman de la configuración del formulario
+   - **Campos dinámicos**: Se incluyen en el payload enviado a FIFCO
+   - **Valores del usuario**: Provincia, país, políticas se mapean correctamente
+
+#### Modificaciones Técnicas
+
+##### **1. Obtención de Configuración del CPT**:
+```php
+// Get form source from POST data
+$form_source = sanitize_text_field($_POST['form_source'] ?? '');
+
+// Get form configuration from CPT if source is provided
+$form_config = null;
+if (!empty($form_source)) {
+    $form_config = Xpsocial_Forms_CPT::get_form_config_by_source($form_source);
+}
+```
+
+##### **2. Procesamiento de Campos Dinámicos**:
+```php
+// Get dynamic fields data
+$dynamic_fields_data = array();
+if ($form_config && !empty($form_config['dynamic_fields'])) {
+    foreach ($form_config['dynamic_fields'] as $field) {
+        $field_name = 'dynamic_' . $field['name'];
+        if (isset($_POST[$field_name])) {
+            if ($field['type'] === 'checkbox') {
+                // For checkboxes, we get an array
+                $dynamic_fields_data[$field['name']] = is_array($_POST[$field_name]) ? implode(', ', $_POST[$field_name]) : $_POST[$field_name];
+            } else {
+                $dynamic_fields_data[$field['name']] = sanitize_text_field($_POST[$field_name]);
+            }
+        }
+    }
+}
+```
+
+##### **3. Mapeo Correcto de Valores Booleanos**:
+```php
+// Prepare boolean values - check means "Sí"
+$robinson = isset($_POST[ 'field_terms' ]) && $_POST[ 'field_terms' ] === 'si' ? 'false' : 'true';
+$politicaprivacidad = isset($_POST[ 'field_privacy' ]) && $_POST[ 'field_privacy' ] === 'si' ? 'true' : 'false';
+```
+
+##### **4. Guardado en Tabla de Leads**:
+```php
+// Prepare lead data
+$lead_data = array(
+    'FirstName' => $first_name,
+    'LastName' => $last_name,
+    'EmailAddress' => $email,
+    'IDNumber' => $IDCedula,
+    'Gender' => $genero,
+    'BirthDate' => $birthday,
+    'MobileNumber' => $phone,
+    'Province' => $provincia,
+    'Country' => $country,
+    'UserRegisterSocial' => $sn,
+    'CaptureDate' => current_time('Y-m-d H:i:s'),
+    'ModifiedDate' => current_time('Y-m-d H:i:s'),
+    'PoliticasPrivacidad' => $politicaprivacidad === 'true' ? 'Sí' : 'No',
+    'AceptaComunicaciones' => $robinson === 'false' ? 'Sí' : 'No',
+    'snid' => $snid,
+    'it_token' => $it,
+    'id_token' => $desobfuscatedToken,
+    'dynamic_fields' => $dynamic_fields_data
+);
+
+// Add form configuration values if available
+if ($form_config) {
+    $lead_data['Source'] = $form_config['source'];
+    $lead_data['Marca'] = $form_config['marca'] ?? '';
+    if (!empty($form_config['country'])) {
+        $lead_data['Country'] = $form_config['country'];
+    }
+} else {
+    // Fallback values if no form config
+    $lead_data['Source'] = $form_source ?: 'default_form';
+    $lead_data['Marca'] = 'Default';
+}
+```
+
+##### **5. Envío a FIFCO con Valores del CPT**:
+```php
+// Get form configuration values
+$form_config = $data['form_config'] ?? null;
+$form_source = $data['form_source'] ?? '';
+
+// Determine values from form config or fallback to defaults
+$marca = 'Default';
+$source = 'default_form';
+$country = $data['country'] ?? 'Guatemala';
+
+if ($form_config) {
+    $marca = $form_config['marca'] ?? 'Default';
+    $source = $form_config['source'] ?? 'default_form';
+    if (!empty($form_config['country'])) {
+        $country = $form_config['country'];
+    }
+} else if (!empty($form_source)) {
+    $source = $form_source;
+}
+
+// Convert boolean values to Spanish
+$politicas_privacidad = $data['politicaprivacidad'] === 'true' ? 'Sí' : 'No';
+$acepta_comunicaciones = $data['robinson'] === 'false' ? 'Sí' : 'No';
+```
+
+##### **6. Inclusión de Campos Dinámicos en FIFCO**:
+```php
+// Add dynamic fields if available
+if (isset($data['dynamic_fields']) && !empty($data['dynamic_fields'])) {
+    foreach ($data['dynamic_fields'] as $field_name => $field_value) {
+        $formatted_fields[] = [
+            "label" => ucfirst(str_replace('_', ' ', $field_name)),
+            "value" => $field_value
+        ];
+    }
+}
+```
+
+#### Flujo de Datos Actualizado
+
+##### **1. Recepción del Formulario**:
+1. **Form Source**: Se obtiene del campo `form_source` del POST
+2. **Configuración CPT**: Se busca la configuración del formulario por source
+3. **Datos del Usuario**: Se sanitizan todos los campos del formulario
+4. **Campos Dinámicos**: Se procesan según la configuración del CPT
+
+##### **2. Procesamiento de Datos**:
+1. **Mapeo de Valores**: Se mapean correctamente provincia, país, políticas
+2. **Validación**: Se validan campos requeridos y formatos
+3. **Preparación**: Se preparan datos para guardado y envío a APIs
+
+##### **3. Guardado en Base de Datos**:
+1. **Tabla de Leads**: Se guarda en `wp_xpsocial_leads` usando el Leads Manager
+2. **Campos Dinámicos**: Se almacenan como JSON en el campo `dynamic_fields`
+3. **Validación de Duplicados**: Se previenen registros duplicados
+
+##### **4. Envío a APIs**:
+1. **FIFCO API**: Se envían datos con Source y Marca del CPT
+2. **Xeerpa API**: Se mantiene funcionalidad existente
+3. **Campos Dinámicos**: Se incluyen en el payload de FIFCO
+
+#### Mapeo de Campos Actualizado
+
+| Campo Formulario | Campo Tabla/API | Origen del Valor |
+|------------------|-----------------|------------------|
+| `form_source` | `Source` | Atributo del shortcode → CPT |
+| `_xpsocial_marca` | `Marca` | Configuración del CPT |
+| `field_province` | `Province` | Selección del usuario |
+| `field_country` | `Country` | Selección del usuario o CPT |
+| `field_terms` | `PoliticasPrivacidad` | Checkbox del usuario (check = "Sí") |
+| `field_privacy` | `AceptaComunicaciones` | Checkbox del usuario (check = "Sí") |
+| `dynamic_*` | `dynamic_fields` | Campos dinámicos del CPT |
+
+#### Valores de Ejemplo
+
+##### **Configuración del CPT**:
+```php
+$form_config = array(
+    'source' => 'Ker_KetchupLovers_2025',
+    'marca' => 'Kerns',
+    'country' => 'Guatemala',
+    'dynamic_fields' => array(
+        array(
+            'name' => 'preferencia_contacto',
+            'label' => 'Preferencia de Contacto',
+            'type' => 'select',
+            'options' => "Email\nTeléfono\nWhatsApp"
+        )
+    )
+);
+```
+
+##### **Datos Enviados a FIFCO**:
+```json
+{
+    "fields": [
+        {
+            "label": "Marca",
+            "value": "Kerns"
+        },
+        {
+            "label": "Source",
+            "value": "Ker_KetchupLovers_2025"
+        },
+        {
+            "label": "Province",
+            "value": "Guatemala"
+        },
+        {
+            "label": "Country",
+            "value": "Guatemala"
+        },
+        {
+            "label": "PoliticasPrivacidad",
+            "value": "Sí"
+        },
+        {
+            "label": "AceptaComunicaciones",
+            "value": "Sí"
+        },
+        {
+            "label": "Preferencia contacto",
+            "value": "Email"
+        }
+    ]
+}
+```
+
+#### Beneficios de la Integración
+
+1. **Configuración Centralizada**:
+   - ✅ **Source dinámico**: Cada formulario puede tener su source único
+   - ✅ **Marca específica**: Cada formulario puede tener su marca FIFCO
+   - ✅ **País configurable**: País específico por formulario
+   - ✅ **Campos personalizados**: Campos dinámicos por formulario
+
+2. **Mapeo Correcto de Datos**:
+   - ✅ **Valores del usuario**: Provincia, país, políticas se toman correctamente
+   - ✅ **Checkboxes**: Check marcado = "Sí", desmarcado = "No"
+   - ✅ **Campos dinámicos**: Se procesan y almacenan correctamente
+   - ✅ **Validación**: Datos sanitizados y validados
+
+3. **Integración Completa**:
+   - ✅ **Tabla de leads**: Guardado automático en `wp_xpsocial_leads`
+   - ✅ **FIFCO API**: Envío con valores del CPT
+   - ✅ **Xeerpa API**: Mantiene funcionalidad existente
+   - ✅ **Campos dinámicos**: Incluidos en todas las integraciones
+
+4. **Flexibilidad**:
+   - ✅ **Formularios múltiples**: Cada formulario con su configuración
+   - ✅ **Fallbacks**: Valores por defecto si no hay configuración
+   - ✅ **Compatibilidad**: Funciona con formularios existentes
+   - ✅ **Escalabilidad**: Fácil agregar nuevos campos y configuraciones
+
+#### Resultado Final
+
+El sistema ahora funciona completamente integrado:
+
+- ✅ **Formularios dinámicos**: Configurables desde el CPT
+- ✅ **Source y Marca**: Se toman de la configuración del formulario
+- ✅ **Datos del usuario**: Se mapean correctamente desde el formulario
+- ✅ **Guardado en BD**: Automático en la tabla de leads
+- ✅ **Envío a FIFCO**: Con valores correctos del CPT
+- ✅ **Campos dinámicos**: Procesados y enviados correctamente
+- ✅ **Validación**: Checkboxes y campos requeridos funcionan correctamente
+
+---
+
+### Versión 3.1.18 - Limpieza de Código de Debug
+
+#### Cambios Realizados
+- **Archivos modificados**: 
+  - `class-xpsocial_api-rest-login.php` - Eliminación de logs de debug y endpoint temporal
+  - `xpsocial_forms.js` - Eliminación de console.log de debug
+- **Acción**: Limpieza de código de debug después de confirmar funcionamiento
+- **Fecha**: $(date)
+
+#### Limpieza Realizada
+
+##### **1. Eliminación de Endpoint de Debug**:
+- ✅ **Endpoint removido**: `/wp-json/geo-api/v1/debug-countries`
+- ✅ **Función eliminada**: `debug_countries_api()`
+- ✅ **Registro de ruta removido**: Endpoint temporal ya no está disponible
+
+##### **2. Limpieza de Logs de Debug en API REST**:
+
+**Logs eliminados de `get_selected_countries()`**:
+- ✅ `error_log('XPSocial API Debug - Token: ...')`
+- ✅ `error_log('XPSocial API Debug - Countries ID: ...')`
+- ✅ `error_log('XPSocial API Debug - URL: ...')`
+- ✅ `error_log('XPSocial API Debug - Countries ID string: ...')`
+- ✅ `error_log('XPSocial API Debug - HTTP Code: ...')`
+- ✅ `error_log('XPSocial API Debug - Response Body: ...')`
+- ✅ `error_log('XPSocial API Debug - Using data.data structure')`
+- ✅ `error_log('XPSocial API Debug - Using direct array structure')`
+- ✅ `error_log('XPSocial API Debug - Using data.countries structure')`
+- ✅ `error_log('XPSocial API Debug - Using data.results structure')`
+- ✅ `error_log('XPSocial API Error - Unexpected data structure: ...')`
+- ✅ `error_log('XPSocial API Error - Data type: ...')`
+- ✅ `error_log('XPSocial API Error - Array keys: ...')`
+- ✅ `error_log('XPSocial API Warning - Returning empty response due to unexpected structure')`
+- ✅ `error_log('XPSocial API Success - Countries count: ...')`
+
+**Logs eliminados de `get_selected_states()`**:
+- ✅ `error_log('XPSocial States API Debug - Token: ...')`
+- ✅ `error_log('XPSocial States API Debug - Country ID: ...')`
+- ✅ `error_log('XPSocial States API Debug - URL: ...')`
+- ✅ `error_log('XPSocial States API Debug - Country ID: ...')`
+- ✅ `error_log('XPSocial States API Debug - HTTP Code: ...')`
+- ✅ `error_log('XPSocial States API Debug - Response Body: ...')`
+- ✅ `error_log('XPSocial States API Debug - Using data.data structure')`
+- ✅ `error_log('XPSocial States API Debug - Using direct array structure')`
+- ✅ `error_log('XPSocial States API Debug - Using data.states structure')`
+- ✅ `error_log('XPSocial States API Debug - Using data.results structure')`
+- ✅ `error_log('XPSocial States API Error - Unexpected data structure: ...')`
+- ✅ `error_log('XPSocial States API Error - Data type: ...')`
+- ✅ `error_log('XPSocial States API Error - Array keys: ...')`
+- ✅ `error_log('XPSocial States API Warning - Returning empty response due to unexpected structure')`
+- ✅ `error_log('XPSocial States API Success - States count: ...')`
+
+##### **3. Limpieza de Console Logs en JavaScript**:
+
+**Logs eliminados de `fetchCountries()`**:
+- ✅ `console.log("Fetching countries from:", url)`
+- ✅ `console.log("Response status:", response.status)`
+- ✅ `console.log("API Response:", data)`
+- ✅ `console.error("Unexpected data structure:", data)`
+- ✅ `console.log("Countries to process:", countries)`
+- ✅ `console.error("Error fetching countries:", error)`
+
+**Logs eliminados de `fetchProvinces()`**:
+- ✅ `console.log("Fetching provinces from:", url)`
+- ✅ `console.log("Provinces response status:", response.status)`
+- ✅ `console.log("Provinces API Response:", data)`
+- ✅ `console.error("Unexpected provinces data structure:", data)`
+- ✅ `console.log("Provinces to process:", provinces)`
+- ✅ `console.error("Error fetching provinces:", error)`
+
+#### Logs de Error Mantenidos
+
+Se mantuvieron únicamente los logs de error esenciales para el funcionamiento:
+
+##### **API REST**:
+- ✅ `error_log('XPSocial API Error: Token de licencia no configurado')`
+- ✅ `error_log('XPSocial API Error: Países no configurados')`
+- ✅ `error_log('XPSocial API Error - WP Error: ...')`
+- ✅ `error_log('XPSocial API Error - JSON Decode Error: ...')`
+- ✅ `error_log('XPSocial States API Error: Token de licencia no configurado')`
+- ✅ `error_log('XPSocial States API Error: Country ID no proporcionado')`
+- ✅ `error_log('XPSocial States API Error - cURL Error: ...')`
+- ✅ `error_log('XPSocial States API Error - JSON Decode Error: ...')`
+
+#### Beneficios de la Limpieza
+
+##### **1. Código Más Limpio**:
+- ✅ **Menos ruido**: Eliminación de logs innecesarios en producción
+- ✅ **Mejor rendimiento**: Menos operaciones de logging
+- ✅ **Código más legible**: Enfoque en la funcionalidad principal
+
+##### **2. Logs de Producción Optimizados**:
+- ✅ **Solo errores críticos**: Logs únicamente para problemas reales
+- ✅ **Información esencial**: Mantenimiento de logs de error importantes
+- ✅ **Debugging cuando necesario**: Logs de error para diagnóstico
+
+##### **3. Mantenimiento Simplificado**:
+- ✅ **Código más limpio**: Fácil de leer y mantener
+- ✅ **Menos archivos de log**: Reducción del tamaño de logs
+- ✅ **Enfoque en funcionalidad**: Código centrado en la lógica de negocio
+
+#### Funcionalidad Mantenida
+
+A pesar de la limpieza, se mantiene toda la funcionalidad:
+
+##### **1. Manejo Flexible de Estructuras**:
+- ✅ **Múltiples formatos**: Soporte para diferentes estructuras de respuesta
+- ✅ **Fallback robusto**: Respuesta vacía en lugar de error crítico
+- ✅ **Validación de datos**: Verificación de estructura antes de procesar
+
+##### **2. Manejo de Errores**:
+- ✅ **Validación de configuración**: Verificación de token y países
+- ✅ **Manejo de errores de conexión**: Logs de errores de API
+- ✅ **Fallbacks de usuario**: Mensajes de error en interfaz
+
+##### **3. Experiencia de Usuario**:
+- ✅ **Formularios funcionales**: Carga de países y provincias
+- ✅ **Mensajes de error claros**: Para usuarios finales
+- ✅ **Continuidad del servicio**: Funcionamiento robusto
+
+#### Resultado Final
+
+La limpieza de código resulta en:
+
+- ✅ **Código más limpio**: Sin logs de debug innecesarios
+- ✅ **Mejor rendimiento**: Menos operaciones de logging
+- ✅ **Funcionalidad completa**: Todas las características funcionando
+- ✅ **Logs esenciales**: Solo errores críticos registrados
+- ✅ **Mantenimiento simplificado**: Código más fácil de leer y mantener
+
+---
+
+### Versión 3.1.17 - Manejo Flexible de Estructuras de Respuesta de API
+
+#### Cambios Realizados
+- **Archivos modificados**: 
+  - `class-xpsocial_api-rest-login.php` - Manejo flexible de estructuras de respuesta
+- **Acción**: Corrección de error "Estructura de datos inválida recibida de la API"
+- **Fecha**: $(date)
+
+#### Problema Identificado y Solucionado
+
+**Error "Estructura de datos inválida recibida de la API"**:
+- **Causa**: La API externa devuelve diferentes estructuras de respuesta que no coinciden con la validación rígida
+- **Solución**: Implementación de manejo flexible de múltiples estructuras de respuesta
+- **Mejora**: Agregado endpoint de debug para investigar respuestas de API
+
+#### Mejoras Implementadas
+
+##### **1. Manejo Flexible de Estructuras de Respuesta**:
+
+**Antes**:
+```php
+// Verificar si la respuesta tiene datos válidos
+if (!isset($data['data']) || !is_array($data['data'])) {
+    error_log('XPSocial API Error - Invalid data structure: ' . print_r($data, true));
+    return new WP_Error('api_error', 'Estructura de datos inválida recibida de la API', array('status' => 500));
+}
+```
+
+**Después**:
+```php
+// Verificar si la respuesta tiene datos válidos - manejo más flexible
+$countries_data = null;
+
+if (isset($data['data']) && is_array($data['data'])) {
+    // Estructura esperada: { "data": [...] }
+    $countries_data = $data['data'];
+    error_log('XPSocial API Debug - Using data.data structure');
+} elseif (is_array($data)) {
+    // Estructura alternativa: [...] (array directo)
+    $countries_data = $data;
+    error_log('XPSocial API Debug - Using direct array structure');
+} elseif (isset($data['countries']) && is_array($data['countries'])) {
+    // Estructura alternativa: { "countries": [...] }
+    $countries_data = $data['countries'];
+    error_log('XPSocial API Debug - Using data.countries structure');
+} elseif (isset($data['results']) && is_array($data['results'])) {
+    // Estructura alternativa: { "results": [...] }
+    $countries_data = $data['results'];
+    error_log('XPSocial API Debug - Using data.results structure');
+} else {
+    // Log detallado de la estructura recibida
+    error_log('XPSocial API Error - Unexpected data structure: ' . print_r($data, true));
+    error_log('XPSocial API Error - Data type: ' . gettype($data));
+    if (is_array($data)) {
+        error_log('XPSocial API Error - Array keys: ' . implode(', ', array_keys($data)));
+    }
+    
+    // Intentar devolver una respuesta vacía en lugar de error
+    $empty_response = array('data' => array());
+    error_log('XPSocial API Warning - Returning empty response due to unexpected structure');
+    return rest_ensure_response($empty_response);
+}
+
+// Reconstruir la respuesta con la estructura estándar
+$standard_response = array('data' => $countries_data);
+```
+
+##### **2. Endpoint de Debug Agregado**:
+
+**Nuevo endpoint**: `/wp-json/geo-api/v1/debug-countries`
+
+**Funcionalidad**:
+```php
+function debug_countries_api(WP_REST_Request $request)
+{
+    $debug_info = array(
+        'config' => array(
+            'token_present' => !empty($token),
+            'token_length' => strlen($token),
+            'countries_id' => $countries_id,
+            'countries_count' => is_array($countries_id) ? count($countries_id) : 0,
+            'api_url' => URLAPI . 'countries/selected'
+        ),
+        'raw_response' => null,
+        'parsed_response' => null,
+        'errors' => array()
+    );
+    
+    // Información detallada de la respuesta de la API externa
+    $debug_info['raw_response'] = array(
+        'http_code' => $http_code,
+        'body' => $body,
+        'body_length' => strlen($body)
+    );
+    
+    $debug_info['parsed_response'] = array(
+        'data_type' => gettype($data),
+        'is_array' => is_array($data),
+        'keys' => is_array($data) ? array_keys($data) : null,
+        'structure' => $data
+    );
+    
+    return rest_ensure_response($debug_info);
+}
+```
+
+#### Estructuras de Respuesta Soportadas
+
+##### **1. Estructura Estándar**:
+```json
+{
+    "data": [
+        {
+            "country_id": 1,
+            "name": "Costa Rica",
+            "emoji": "🇨🇷",
+            "phone_code": "+506"
+        }
+    ]
+}
+```
+
+##### **2. Array Directo**:
+```json
+[
+    {
+        "country_id": 1,
+        "name": "Costa Rica",
+        "emoji": "🇨🇷",
+        "phone_code": "+506"
+    }
+]
+```
+
+##### **3. Estructura con "countries"**:
+```json
+{
+    "countries": [
+        {
+            "country_id": 1,
+            "name": "Costa Rica",
+            "emoji": "🇨🇷",
+            "phone_code": "+506"
+        }
+    ]
+}
+```
+
+##### **4. Estructura con "results"**:
+```json
+{
+    "results": [
+        {
+            "country_id": 1,
+            "name": "Costa Rica",
+            "emoji": "🇨🇷",
+            "phone_code": "+506"
+        }
+    ]
+}
+```
+
+#### Funcionalidades de Debug Mejoradas
+
+##### **1. Logging Detallado de Estructuras**:
+- ✅ **Tipo de estructura detectada**: Log específico del tipo de estructura encontrada
+- ✅ **Información de fallback**: Log cuando se usa estructura alternativa
+- ✅ **Análisis de estructura**: Tipo de datos, claves de array, contenido completo
+
+##### **2. Manejo de Errores Mejorado**:
+- ✅ **Respuesta vacía**: En lugar de error 500, devuelve array vacío
+- ✅ **Logging específico**: Información detallada sobre estructuras no reconocidas
+- ✅ **Continuidad del servicio**: El formulario sigue funcionando aunque la API tenga problemas
+
+##### **3. Endpoint de Debug**:
+- ✅ **Información de configuración**: Estado de token y países configurados
+- ✅ **Respuesta cruda**: Código HTTP y cuerpo completo de la respuesta
+- ✅ **Análisis de estructura**: Tipo de datos y claves disponibles
+- ✅ **Errores específicos**: Lista de errores encontrados
+
+#### Beneficios de las Mejoras
+
+##### **1. Robustez**:
+- ✅ **Múltiples formatos**: Soporte para diferentes estructuras de respuesta
+- ✅ **Fallback inteligente**: Respuesta vacía en lugar de error crítico
+- ✅ **Continuidad**: El formulario funciona independientemente de la estructura de API
+
+##### **2. Debugging Facilitado**:
+- ✅ **Endpoint de debug**: Información completa de la respuesta de API
+- ✅ **Logging detallado**: Información específica sobre estructuras detectadas
+- ✅ **Análisis de errores**: Información detallada para diagnosticar problemas
+
+##### **3. Mantenimiento Simplificado**:
+- ✅ **Flexibilidad**: Adaptación automática a cambios en la API externa
+- ✅ **Información de contexto**: Logs detallados para análisis posterior
+- ✅ **Herramientas de debug**: Endpoint específico para investigar problemas
+
+#### Instrucciones de Uso del Endpoint de Debug
+
+Para investigar problemas con la API de países:
+
+1. **Acceder al endpoint de debug**:
+   ```
+   GET /wp-json/geo-api/v1/debug-countries
+   ```
+
+2. **Revisar la información de configuración**:
+   - `token_present`: Si el token está configurado
+   - `countries_id`: IDs de países configurados
+   - `api_url`: URL de la API externa
+
+3. **Analizar la respuesta cruda**:
+   - `http_code`: Código de respuesta HTTP
+   - `body`: Cuerpo completo de la respuesta
+   - `body_length`: Longitud del cuerpo de respuesta
+
+4. **Examinar la estructura parseada**:
+   - `data_type`: Tipo de datos (array, object, etc.)
+   - `keys`: Claves disponibles en la respuesta
+   - `structure`: Estructura completa de los datos
+
+#### Resultado Final
+
+Las mejoras implementadas resuelven:
+
+- ✅ **Error de estructura inválida**: Manejo flexible de múltiples formatos
+- ✅ **Falta de información de debug**: Endpoint específico para investigar
+- ✅ **Rigidez en validación**: Adaptación automática a diferentes estructuras
+- ✅ **Experiencia de usuario**: Continuidad del servicio con fallbacks robustos
+- ✅ **Mantenimiento**: Herramientas de debug para análisis detallado
+
+---
+
+### Versión 3.1.16 - Corrección de Errores en API de Países
+
+#### Cambios Realizados
+- **Archivos modificados**: 
+  - `xpsocial_forms.js` - Mejora del manejo de errores en JavaScript
+  - `class-xpsocial_api-rest-login.php` - Mejora del manejo de errores en API REST
+- **Acción**: Corrección de errores 400 (Bad Request) y manejo de respuestas de API
+- **Fecha**: $(date)
+
+#### Problemas Identificados y Solucionados
+
+1. **Error 400 (Bad Request)**:
+   - **Causa**: Configuración incompleta (token de licencia o países no configurados)
+   - **Solución**: Validación mejorada con mensajes de error específicos
+   - **Logging**: Agregado logging detallado para debugging
+
+2. **Error "countries.forEach is not a function"**:
+   - **Causa**: Respuesta de API con estructura inesperada
+   - **Solución**: Validación de estructura de datos antes de procesar
+   - **Fallback**: Manejo de diferentes formatos de respuesta
+
+3. **Falta de información de debug**:
+   - **Problema**: Errores sin información suficiente para diagnosticar
+   - **Solución**: Logging detallado en consola y archivos de log
+
+#### Mejoras Implementadas
+
+##### **1. Manejo de Errores en JavaScript**:
+
+**Antes**:
+```javascript
+fetch(url, requestOptions)
+.then((response) => response.json())
+.then((data) => {
+    let countries = JSON.parse(JSON.stringify(data));
+    countries.forEach((country) => {
+        // Procesar países
+    });
+})
+.catch((error) => console.error("Error fetching countries:", error));
+```
+
+**Después**:
+```javascript
+fetch(url, requestOptions)
+.then((response) => {
+    console.log("Response status:", response.status);
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+})
+.then((data) => {
+    console.log("API Response:", data);
+    
+    // Verificar si la respuesta tiene la estructura esperada
+    let countries = [];
+    if (data && data.data && Array.isArray(data.data)) {
+        countries = data.data;
+    } else if (Array.isArray(data)) {
+        countries = data;
+    } else {
+        console.error("Unexpected data structure:", data);
+        throw new Error("Invalid data structure received from API");
+    }
+    
+    countries.forEach((country) => {
+        // Procesar países
+    });
+})
+.catch((error) => {
+    console.error("Error fetching countries:", error);
+    
+    // Mostrar mensaje de error al usuario
+    if (countrySelect) {
+        countrySelect.innerHTML = '<option value="">Error al cargar países</option>';
+        countrySelect.disabled = true;
+    }
+});
+```
+
+##### **2. Validación Mejorada en API REST**:
+
+**Antes**:
+```php
+// Validar que tenemos los datos necesarios
+if (empty($token) || empty($countries_id)) {
+    return new WP_Error('missing_config', 'Configuración incompleta', array('status' => 400));
+}
+```
+
+**Después**:
+```php
+// Log para debugging
+error_log('XPSocial API Debug - Token: ' . (!empty($token) ? 'Present' : 'Missing'));
+error_log('XPSocial API Debug - Countries ID: ' . print_r($countries_id, true));
+
+// Validar que tenemos los datos necesarios
+if (empty($token)) {
+    error_log('XPSocial API Error: Token de licencia no configurado');
+    return new WP_Error('missing_token', 'Token de licencia no configurado. Por favor configure la licencia en la configuración del plugin.', array('status' => 400));
+}
+
+if (empty($countries_id)) {
+    error_log('XPSocial API Error: Países no configurados');
+    return new WP_Error('missing_countries', 'No hay países configurados. Por favor seleccione al menos un país en la configuración del plugin.', array('status' => 400));
+}
+```
+
+##### **3. Logging Detallado de Respuestas**:
+
+```php
+// Log de la petición
+error_log('XPSocial API Debug - URL: ' . $api_url);
+error_log('XPSocial API Debug - Countries ID string: ' . $countries_id);
+
+// Obtener código de respuesta HTTP
+$http_code = wp_remote_retrieve_response_code($response);
+error_log('XPSocial API Debug - HTTP Code: ' . $http_code);
+
+// Procesar respuesta
+$body = wp_remote_retrieve_body($response);
+error_log('XPSocial API Debug - Response Body: ' . $body);
+
+// Verificar si la respuesta tiene datos válidos
+if (!isset($data['data']) || !is_array($data['data'])) {
+    error_log('XPSocial API Error - Invalid data structure: ' . print_r($data, true));
+    return new WP_Error('api_error', 'Estructura de datos inválida recibida de la API', array('status' => 500));
+}
+
+error_log('XPSocial API Success - Countries count: ' . count($data['data']));
+```
+
+#### Funcionalidades de Debug Agregadas
+
+##### **1. Logging en Consola del Navegador**:
+- ✅ **URL de petición**: Se muestra la URL completa de la API
+- ✅ **Status de respuesta**: Código HTTP de la respuesta
+- ✅ **Estructura de datos**: Validación de la estructura recibida
+- ✅ **Conteo de elementos**: Número de países/provincias recibidos
+
+##### **2. Logging en Archivos de WordPress**:
+- ✅ **Configuración**: Estado de token y países configurados
+- ✅ **Peticiones**: URL y parámetros enviados
+- ✅ **Respuestas**: Código HTTP y cuerpo de respuesta
+- ✅ **Errores**: Mensajes detallados de errores específicos
+
+##### **3. Mensajes de Error Específicos**:
+- ✅ **Token faltante**: "Token de licencia no configurado"
+- ✅ **Países faltantes**: "No hay países configurados"
+- ✅ **Estructura inválida**: "Estructura de datos inválida"
+- ✅ **Errores de conexión**: Mensajes específicos de cURL/WP_Error
+
+#### Manejo de Diferentes Estructuras de Respuesta
+
+##### **Estructura Esperada**:
+```json
+{
+    "data": [
+        {
+            "country_id": 1,
+            "name": "Costa Rica",
+            "emoji": "🇨🇷",
+            "phone_code": "+506"
+        }
+    ]
+}
+```
+
+##### **Estructura Alternativa**:
+```json
+[
+    {
+        "country_id": 1,
+        "name": "Costa Rica",
+        "emoji": "🇨🇷",
+        "phone_code": "+506"
+    }
+]
+```
+
+##### **Validación Implementada**:
+```javascript
+// Verificar si la respuesta tiene la estructura esperada
+let countries = [];
+if (data && data.data && Array.isArray(data.data)) {
+    countries = data.data;  // Estructura con wrapper "data"
+} else if (Array.isArray(data)) {
+    countries = data;       // Estructura directa de array
+} else {
+    console.error("Unexpected data structure:", data);
+    throw new Error("Invalid data structure received from API");
+}
+```
+
+#### Mejoras en la Experiencia del Usuario
+
+##### **1. Mensajes de Error Claros**:
+- ✅ **En consola**: Información detallada para desarrolladores
+- ✅ **En interfaz**: Mensajes simples para usuarios finales
+- ✅ **Estados de carga**: Indicadores visuales de errores
+
+##### **2. Fallbacks Robustos**:
+- ✅ **Campos deshabilitados**: Cuando hay errores de API
+- ✅ **Mensajes informativos**: "Error al cargar países"
+- ✅ **Prevención de crashes**: Validación antes de procesar datos
+
+##### **3. Debugging Facilitado**:
+- ✅ **Logs detallados**: En archivos de WordPress
+- ✅ **Console logs**: En navegador para debugging
+- ✅ **Información de contexto**: URLs, parámetros, respuestas
+
+#### Configuración Requerida
+
+Para que la API funcione correctamente, se requiere:
+
+##### **1. Token de Licencia**:
+- **Campo**: `xpsocial_licencia` en opciones de WordPress
+- **Ubicación**: Configuración del plugin → Xeerpa Config
+- **Formato**: Token de autenticación para la API externa
+
+##### **2. Países Configurados**:
+- **Campo**: `xpsocial_countries` en opciones de WordPress
+- **Ubicación**: Configuración del plugin → Xeerpa Config
+- **Formato**: Array de IDs de países
+
+##### **3. URL de API**:
+- **Constante**: `URLAPI` definida en el plugin
+- **Valor por defecto**: `https://geo.erna.group/api/`
+- **Uso**: Base URL para todas las peticiones de geolocalización
+
+#### Resultado Final
+
+Las mejoras implementadas resuelven:
+
+- ✅ **Error 400 (Bad Request)**: Mensajes específicos sobre configuración faltante
+- ✅ **Error forEach**: Validación de estructura de datos antes de procesar
+- ✅ **Falta de información**: Logging detallado para debugging
+- ✅ **Experiencia de usuario**: Mensajes claros y fallbacks robustos
+- ✅ **Mantenimiento**: Información suficiente para diagnosticar problemas
+
+#### Instrucciones para Resolver el Error
+
+Si el error persiste, verificar:
+
+1. **Token de Licencia**:
+   - Ir a Configuración del plugin → Xeerpa Config
+   - Verificar que el campo "Licencia" esté configurado
+
+2. **Países Configurados**:
+   - Ir a Configuración del plugin → Xeerpa Config
+   - Verificar que al menos un país esté seleccionado
+
+3. **Logs de Debug**:
+   - Revisar `wp-content/debug.log` para mensajes de error específicos
+   - Revisar consola del navegador para información adicional
+
+4. **URL de API**:
+   - Verificar que la constante `URLAPI` esté correctamente definida
+   - Probar conectividad a la API externa
+
+---
+
 ## Próximas Modificaciones
 
 ### Pendientes de Definir

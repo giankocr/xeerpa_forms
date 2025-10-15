@@ -1,0 +1,222 @@
+<!-- Formulario de Registro Dinámico -->
+<div class="xpsocial-form" data-source="<?php echo esc_attr($form_config['source']); ?>">
+    <div class="socials register-social">
+    </div>
+    <form method="POST"
+        action="<?php echo esc_url(get_site_url() . '/wp-content/plugins/xpsocial_login/includes/class-xpsocial_register-form.php'); ?>"
+        enctype="multipart/form-data" id="register_form" class="register_form" validate>
+    <?php wp_nonce_field('register_form_action', 'register_form_nonce'); ?>
+    <input type="hidden" name="form_source" value="<?php echo esc_attr($form_config['source']); ?>">
+    <div>
+        <div>
+            <input name="field_it" id="field_it" type="hidden" value="" autocomplete="off">
+            <input name="field_idcrm" id="field_idcrm" type="hidden" value="" autocomplete="off">
+            <input name="field_snid" id="field_snid" type="hidden" value="" autocomplete="off">
+            <input name="field_sn" id="field_sn" type="hidden" value="" autocomplete="off">
+            <span id="messagelogin"></span>
+        </div>
+        <span id="login-message"></span>
+        <div class="form-row">
+            <div class="form-col">
+                <label for="field_firstname">Nombre</label>
+                <input name="field_firstname" id="field_firstname" type="text" value="" required autocomplete="off" 
+                       pattern="[A-Za-zÀ-ÿ\s]+" 
+                       title="Ingrese su nombre. Solo se permiten letras y espacios.">
+            </div>
+            <div class="form-col">
+                <label for="field_lastname">Apellidos</label>
+                <input name="field_lastname" id="field_lastname" type="text" value="" required autocomplete="off" 
+                       pattern="[A-Za-zÀ-ÿ\s]+" 
+                       title="Ingrese sus apellidos. Solo se permiten letras y espacios.">
+            </div>
+        </div>
+        <div>
+            <label for="field_email">Correo electrónico</label>
+            <input name="field_email" id="field_email" type="email" value="" 
+            title="Formato de correo electrónico inválido.">
+        </div>
+        <div class="form-row">
+            <div class="form-col">
+                <label for="field_birthday">Fecha de Nacimiento</label>
+                <input name="field_birthday" id="field_birthday" type="date" value="" class="field_birthday" 
+                       placeholder="Fecha de Nacimiento" required autocomplete="off" 
+                       title="Seleccione su fecha de nacimiento.">
+            </div>
+            <div class="form-col">
+                <label for="field_gender">Género</label>
+                <select name="field_gender" id="field_gender" required autocomplete="off" 
+                        title="Seleccione su género.">
+                    <option value="" disabled selected class="placeholder">Seleccione una opción</option>
+                    <option value="f">Femenino</option>
+                    <option value="m">Masculino</option>
+                    <option value="nb">Prefiero no decir</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-col">
+                <label for="field_countryPhoneCode">Código + Teléfono</label>
+                <div class="select-container">
+                    <span>
+                        <select name="field_countryPhoneCode" id="field_countryPhoneCode" required autocomplete="off" 
+                                title="Seleccione el código de país.">
+                            <option value="" disabled selected class="placeholder">Código</option>
+                        </select>
+                    </span>
+                    <span>
+                        <input name="field_phone" id="field_phone" type="tel" value="" required autocomplete="off" 
+                               placeholder="Número de teléfono" 
+                               title="Ingrese su número de teléfono.">
+                    </span>
+                </div>
+            </div>
+            <div class="form-col">
+                <label for="field_id">Número de cédula / Identificación</label>
+                <input name="field_id" id="field_id" type="text" value="" required autocomplete="off" 
+                       placeholder="Número de cédula" 
+                       title="Ingrese su número de cédula o identificación.">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-col">
+                <label for="field_country">País</label>
+                <select name="field_country" id="field_country" required autocomplete="off" 
+                        title="Seleccione su país.">
+                    <option value="" disabled selected class="placeholder">Seleccione un país</option>
+                </select>
+            </div>
+            <div class="form-col">
+                <label for="field_province">Provincia</label>
+                <select name="field_province" id="field_province" required autocomplete="off" 
+                        title="Seleccione su provincia.">
+                    <option value="" disabled selected class="placeholder">Seleccione una provincia</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Campos dinámicos -->
+        <?php if (!empty($form_config['dynamic_fields']) && is_array($form_config['dynamic_fields'])): ?>
+            <?php foreach ($form_config['dynamic_fields'] as $field): ?>
+                <div class="form-group dynamic-field" data-field-type="<?php echo esc_attr($field['type']); ?>">
+                    <label for="dynamic_<?php echo esc_attr($field['name']); ?>">
+                        <?php echo esc_html($field['label']); ?>
+                        <?php if ($field['required'] == '1'): ?>
+                            <span class="required">*</span>
+                        <?php endif; ?>
+                    </label>
+                    
+                    <?php if ($field['type'] == 'text'): ?>
+                        <input type="text" 
+                               id="dynamic_<?php echo esc_attr($field['name']); ?>" 
+                               name="dynamic_<?php echo esc_attr($field['name']); ?>" 
+                               value="" 
+                               placeholder="<?php echo esc_attr($field['placeholder']); ?>"
+                               <?php echo $field['required'] == '1' ? 'required' : ''; ?>>
+                    
+                    <?php elseif ($field['type'] == 'textarea'): ?>
+                        <textarea id="dynamic_<?php echo esc_attr($field['name']); ?>" 
+                                  name="dynamic_<?php echo esc_attr($field['name']); ?>" 
+                                  placeholder="<?php echo esc_attr($field['placeholder']); ?>"
+                                  <?php echo $field['required'] == '1' ? 'required' : ''; ?>></textarea>
+                    
+                    <?php elseif ($field['type'] == 'select'): ?>
+                        <select id="dynamic_<?php echo esc_attr($field['name']); ?>" 
+                                name="dynamic_<?php echo esc_attr($field['name']); ?>"
+                                <?php echo $field['required'] == '1' ? 'required' : ''; ?>>
+                            <option value="" disabled selected><?php echo esc_attr($field['placeholder']); ?></option>
+                            <?php if (!empty($field['options'])): ?>
+                                <?php foreach (explode("\n", $field['options']) as $option): ?>
+                                    <?php $option = trim($option); ?>
+                                    <?php if (!empty($option)): ?>
+                                        <option value="<?php echo esc_attr($option); ?>"><?php echo esc_html($option); ?></option>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                    
+                    <?php elseif ($field['type'] == 'radio'): ?>
+                        <div class="radio-group">
+                            <?php if (!empty($field['options'])): ?>
+                                <?php foreach (explode("\n", $field['options']) as $index => $option): ?>
+                                    <?php $option = trim($option); ?>
+                                    <?php if (!empty($option)): ?>
+                                        <label class="radio-option">
+                                            <input type="radio" 
+                                                   name="dynamic_<?php echo esc_attr($field['name']); ?>" 
+                                                   value="<?php echo esc_attr($option); ?>"
+                                                   <?php echo $field['required'] == '1' ? 'required' : ''; ?>>
+                                            <?php echo esc_html($option); ?>
+                                        </label>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+                    
+                    <?php elseif ($field['type'] == 'checkbox'): ?>
+                        <div class="checkbox-group">
+                            <?php if (!empty($field['options'])): ?>
+                                <?php foreach (explode("\n", $field['options']) as $index => $option): ?>
+                                    <?php $option = trim($option); ?>
+                                    <?php if (!empty($option)): ?>
+                                        <label class="checkbox-option">
+                                            <input type="checkbox" 
+                                                   name="dynamic_<?php echo esc_attr($field['name']); ?>[]" 
+                                                   value="<?php echo esc_attr($option); ?>">
+                                            <?php echo esc_html($option); ?>
+                                        </label>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+                    
+                    <?php elseif ($field['type'] == 'audio'): ?>
+                        <input type="file" 
+                               id="dynamic_<?php echo esc_attr($field['name']); ?>" 
+                               name="dynamic_<?php echo esc_attr($field['name']); ?>" 
+                               accept="audio/*"
+                               <?php echo $field['required'] == '1' ? 'required' : ''; ?>>
+                        <p class="description">Formatos permitidos: MP3, WAV, OGG</p>
+                    
+                    <?php elseif ($field['type'] == 'image'): ?>
+                        <input type="file" 
+                               id="dynamic_<?php echo esc_attr($field['name']); ?>" 
+                               name="dynamic_<?php echo esc_attr($field['name']); ?>" 
+                               accept="image/*"
+                               <?php echo $field['required'] == '1' ? 'required' : ''; ?>>
+                        <p class="description">Formatos permitidos: JPG, PNG, GIF</p>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+
+        <!-- Términos y Condiciones -->
+        <?php if ($form_config['show_terms']): ?>
+            <div class="checkbox-group">
+                <input type="checkbox" id="field_terms" name="field_terms" value="si" required autocomplete="off">
+                <label for="field_terms">
+                    Acepto términos y condiciones <span class="ver-link">Ver</span>
+                </label>
+            </div>
+        <?php endif; ?>
+
+        <!-- Política de Privacidad -->
+        <?php if ($form_config['show_privacy']): ?>
+            <div class="checkbox-group">
+                <input type="checkbox" id="field_privacy" name="field_privacy" value="si" required autocomplete="off">
+                <label for="field_privacy">
+                    Estoy de acuerdo en recibir comunicaciones y novedades por parte de <strong><?php echo esc_html($form_config['marca'] ?: 'IMPERIAL'); ?></strong>. <span class="ver-link">Políticas de privacidad</span>
+                </label>
+            </div>
+        <?php endif; ?>
+
+        <!-- Campos ocultos para compatibilidad -->
+        <input type="hidden" name="sn" value="FM">
+        <input type="hidden" name="snid" value="">
+        <input type="hidden" name="it" value="">
+        <input type="hidden" name="desobfuscatedToken" value="">
+
+        <div>
+            <button type="submit" id="submit_register" class="btn-submit">Registrarme</button>
+        </div>
+    </form>
+</div>

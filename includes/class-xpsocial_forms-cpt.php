@@ -1,0 +1,814 @@
+<?php
+/**
+ * Custom Post Type para formularios dinámicos de XPSocial
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+class Xpsocial_Forms_CPT
+{
+    public function __construct()
+    {
+        add_action('init', array($this, 'register_cpt'));
+        add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
+        add_action('save_post', array($this, 'save_form_meta'));
+        add_action('admin_menu', array($this, 'add_admin_menu'));
+        add_filter('manage_xpsocial_form_posts_columns', array($this, 'custom_columns'));
+        add_action('manage_xpsocial_form_posts_custom_column', array($this, 'custom_column_content'), 10, 2);
+        add_action('admin_enqueue_scripts', array($this, 'prevent_external_assets'));
+    }
+
+    /**
+     * Prevenir carga de assets externos para evitar ERR_TOO_MANY_RETRIES
+     */
+    public function prevent_external_assets($hook)
+    {
+        // Solo aplicar en páginas del plugin
+        $is_xpsocial_page = (
+            strpos($hook, 'xpsocial') !== false || 
+            strpos($hook, 'xpsocial_form') !== false ||
+            (isset($_GET['post_type']) && $_GET['post_type'] === 'xpsocial_form') ||
+            (isset($_GET['page']) && strpos($_GET['page'], 'xpsocial') !== false)
+        );
+        
+        if ($is_xpsocial_page) {
+            // Remover scripts y estilos que pueden causar problemas
+            wp_dequeue_script('jquery');
+            wp_dequeue_script('jquery-migrate');
+            wp_dequeue_style('wp-admin');
+            wp_dequeue_style('common');
+            wp_dequeue_style('forms');
+            wp_dequeue_style('admin-menu');
+            wp_dequeue_style('dashboard');
+            wp_dequeue_style('list-tables');
+            wp_dequeue_style('edit');
+            wp_dequeue_style('revisions');
+            wp_dequeue_style('media');
+            wp_dequeue_style('themes');
+            wp_dequeue_style('about');
+            wp_dequeue_style('nav-menus');
+            wp_dequeue_style('wp-pointer');
+            wp_dequeue_style('widgets');
+            wp_dequeue_style('site-icon');
+            wp_dequeue_style('l10n');
+            wp_dequeue_style('buttons');
+            wp_dequeue_style('wp-auth-check');
+            
+            // Agregar estilos mínimos necesarios inline
+            add_action('admin_head', array($this, 'add_minimal_admin_styles'));
+        }
+    }
+
+    /**
+     * Agregar estilos mínimos del admin
+     */
+    public function add_minimal_admin_styles()
+    {
+        ?>
+        <style>
+        /* Estilos mínimos del admin de WordPress */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+            font-size: 14px;
+            line-height: 1.4;
+            color: #23282d;
+            background: #f1f1f1;
+            margin: 0;
+            padding: 0;
+        }
+        
+        #wpbody {
+            padding: 20px;
+        }
+        
+        .wrap {
+            background: #fff;
+            border: 1px solid #c3c4c7;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            color: #23282d;
+            font-weight: 600;
+            margin: 0 0 10px 0;
+        }
+        
+        h1 {
+            font-size: 23px;
+        }
+        
+        h2 {
+            font-size: 18px;
+        }
+        
+        p {
+            margin: 0 0 10px 0;
+        }
+        
+        a {
+            color: #2271b1;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            color: #135e96;
+        }
+        
+        /* Estilos para formularios */
+        .form-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+        }
+        
+        .form-table th,
+        .form-table td {
+            padding: 15px 10px;
+            border-bottom: 1px solid #c3c4c7;
+            vertical-align: top;
+        }
+        
+        .form-table th {
+            width: 200px;
+            font-weight: 600;
+            color: #23282d;
+        }
+        
+        .form-table tr:nth-child(odd) {
+            background-color: #f9f9f9;
+        }
+        
+        /* Estilos para inputs */
+        input[type="text"],
+        input[type="email"],
+        input[type="url"],
+        input[type="password"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            max-width: 400px;
+            padding: 8px 12px;
+            border: 1px solid #8c8f94;
+            border-radius: 3px;
+            background-color: #fff;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        input[type="color"] {
+            width: 50px;
+            height: 35px;
+            padding: 0;
+            border: 1px solid #8c8f94;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        input[type="checkbox"] {
+            margin: 0 5px 0 0;
+        }
+        
+        /* Estilos para botones */
+        .button,
+        .button-primary,
+        .button-secondary {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 0 5px 0 0;
+            border: 1px solid #8c8f94;
+            border-radius: 3px;
+            background: #f6f7f7;
+            color: #2c3338;
+            text-decoration: none;
+            font-size: 13px;
+            line-height: 1.4;
+            cursor: pointer;
+            text-align: center;
+        }
+        
+        .button-primary {
+            background: #2271b1;
+            border-color: #2271b1;
+            color: #fff;
+        }
+        
+        .button-primary:hover {
+            background: #135e96;
+            border-color: #135e96;
+            color: #fff;
+        }
+        
+        /* Estilos para tabs */
+        .nav-tab-wrapper {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #c3c4c7;
+        }
+        
+        .nav-tab {
+            display: inline-block;
+            padding: 8px 12px;
+            margin-right: 5px;
+            border: 1px solid #c3c4c7;
+            border-bottom: none;
+            background: #f6f7f7;
+            color: #2c3338;
+            text-decoration: none;
+            border-radius: 3px 3px 0 0;
+        }
+        
+        .nav-tab:hover {
+            background: #f0f0f1;
+            color: #2c3338;
+        }
+        
+        .nav-tab-active {
+            background: #fff;
+            color: #2c3338;
+            border-bottom: 1px solid #fff;
+            margin-bottom: -1px;
+            font-weight: 600;
+        }
+        
+        /* Estilos para descripciones */
+        .description {
+            font-style: italic;
+            color: #646970;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        
+        /* Estilos para labels */
+        label {
+            font-weight: 600;
+            color: #23282d;
+        }
+        
+        /* Estilos para meta boxes */
+        .field-item {
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+        }
+        
+        .field-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .field-header h4 {
+            margin: 0;
+        }
+        </style>
+        <?php
+    }
+
+    /**
+     * Registrar Custom Post Type
+     */
+    public function register_cpt()
+    {
+        $labels = array(
+            'name' => 'Formularios XP Social',
+            'singular_name' => 'Formulario XP Social',
+            'menu_name' => 'Formularios XP Social',
+            'add_new' => 'Agregar Nuevo',
+            'add_new_item' => 'Agregar Nuevo Formulario',
+            'edit_item' => 'Editar Formulario',
+            'new_item' => 'Nuevo Formulario',
+            'view_item' => 'Ver Formulario',
+            'search_items' => 'Buscar Formularios',
+            'not_found' => 'No se encontraron formularios',
+            'not_found_in_trash' => 'No se encontraron formularios en la papelera'
+        );
+
+        $args = array(
+            'labels' => $labels,
+            'public' => false,
+            'publicly_queryable' => false,
+            'show_ui' => true,
+            'show_in_menu' => false, // Lo manejamos manualmente
+            'query_var' => true,
+            'rewrite' => false,
+            'capability_type' => 'post',
+            'has_archive' => false,
+            'hierarchical' => false,
+            'menu_position' => null,
+            'menu_icon' => 'dashicons-feedback',
+            'supports' => array('title', 'editor'),
+            'show_in_rest' => false
+        );
+
+        register_post_type('xpsocial_form', $args);
+    }
+
+    /**
+     * Agregar menú de administración
+     */
+    public function add_admin_menu()
+    {
+        add_menu_page(
+            'Formularios XP Social',
+            'Formularios XP Social',
+            'manage_options',
+            'xpsocial-forms',
+            array($this, 'forms_list_page'),
+            'dashicons-feedback',
+            30
+        );
+
+        add_submenu_page(
+            'xpsocial-forms',
+            'Todos los Formularios',
+            'Todos los Formularios',
+            'manage_options',
+            'edit.php?post_type=xpsocial_form'
+        );
+
+        add_submenu_page(
+            'xpsocial-forms',
+            'Agregar Nuevo',
+            'Agregar Nuevo',
+            'manage_options',
+            'post-new.php?post_type=xpsocial_form'
+        );
+    }
+
+    /**
+     * Página de lista de formularios
+     */
+    public function forms_list_page()
+    {
+        $forms = get_posts(array(
+            'post_type' => 'xpsocial_form',
+            'numberposts' => -1,
+            'post_status' => 'publish'
+        ));
+
+        echo '<div class="wrap">';
+        echo '<h1>Formularios XP Social</h1>';
+        
+        if (empty($forms)) {
+            echo '<p>No hay formularios creados aún.</p>';
+            echo '<a href="' . admin_url('post-new.php?post_type=xpsocial_form') . '" class="button button-primary">Crear Primer Formulario</a>';
+        } else {
+            echo '<table class="wp-list-table widefat fixed striped">';
+            echo '<thead><tr>';
+            echo '<th>Título</th>';
+            echo '<th>Source</th>';
+            echo '<th>Marca FIFCO</th>';
+            echo '<th>Campos Dinámicos</th>';
+            echo '<th>Acciones</th>';
+            echo '</tr></thead>';
+            echo '<tbody>';
+            
+            foreach ($forms as $form) {
+                $source = get_post_meta($form->ID, '_xpsocial_source', true);
+                $marca = get_post_meta($form->ID, '_xpsocial_marca', true);
+                $dynamic_fields = get_post_meta($form->ID, '_xpsocial_dynamic_fields', true);
+                $fields_count = 0;
+                
+                if ($dynamic_fields) {
+                    $fields_data = is_string($dynamic_fields) ? json_decode($dynamic_fields, true) : $dynamic_fields;
+                    $fields_count = is_array($fields_data) ? count($fields_data) : 0;
+                }
+                
+                echo '<tr>';
+                echo '<td><strong>' . esc_html($form->post_title) . '</strong></td>';
+                echo '<td>' . esc_html($source ?: 'No configurado') . '</td>';
+                echo '<td>' . esc_html($marca ?: 'No configurado') . '</td>';
+                echo '<td>' . $fields_count . ' campos</td>';
+                echo '<td>';
+                echo '<a href="' . get_edit_post_link($form->ID) . '" class="button button-small">Editar</a> ';
+                echo '<a href="' . get_permalink($form->ID) . '" class="button button-small" target="_blank">Ver</a>';
+                echo '</td>';
+                echo '</tr>';
+            }
+            
+            echo '</tbody></table>';
+        }
+        
+        echo '</div>';
+    }
+
+    /**
+     * Agregar meta boxes
+     */
+    public function add_meta_boxes()
+    {
+        add_meta_box(
+            'xpsocial_form_config',
+            'Configuración del Formulario',
+            array($this, 'form_config_meta_box'),
+            'xpsocial_form',
+            'normal',
+            'high'
+        );
+
+        add_meta_box(
+            'xpsocial_form_fields',
+            'Campos Dinámicos',
+            array($this, 'form_fields_meta_box'),
+            'xpsocial_form',
+            'normal',
+            'high'
+        );
+    }
+
+    /**
+     * Meta box de configuración básica
+     */
+    public function form_config_meta_box($post)
+    {
+        wp_nonce_field('xpsocial_form_meta', 'xpsocial_form_meta_nonce');
+        
+        $source = get_post_meta($post->ID, '_xpsocial_source', true);
+        $success_html = get_post_meta($post->ID, '_xpsocial_success_html', true);
+        $fifco_enabled = get_post_meta($post->ID, '_xpsocial_fifco_enabled', true);
+        $marca = get_post_meta($post->ID, '_xpsocial_marca', true);
+        $country = get_post_meta($post->ID, '_xpsocial_country', true);
+        $show_terms = get_post_meta($post->ID, '_xpsocial_show_terms', true);
+        $show_privacy = get_post_meta($post->ID, '_xpsocial_show_privacy', true);
+        
+        ?>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="xpsocial_source">Source</label></th>
+                <td>
+                    <input type="text" id="xpsocial_source" name="xpsocial_source" value="<?php echo esc_attr($source); ?>" class="regular-text" />
+                    <p class="description">Identificador único para este formulario (ej: mi_formulario_2025)</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="xpsocial_success_html">Mensaje de Éxito</label></th>
+                <td>
+                    <textarea id="xpsocial_success_html" name="xpsocial_success_html" rows="5" cols="50" class="large-text"><?php echo esc_textarea($success_html); ?></textarea>
+                    <p class="description">HTML que se mostrará después del registro exitoso</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="xpsocial_fifco_enabled">Activar FIFCO API</label></th>
+                <td>
+                    <input type="checkbox" id="xpsocial_fifco_enabled" name="xpsocial_fifco_enabled" value="1" <?php checked($fifco_enabled, '1'); ?> />
+                    <label for="xpsocial_fifco_enabled">Habilitar integración con FIFCO API</label>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="xpsocial_marca">Marca FIFCO</label></th>
+                <td>
+                    <input type="text" id="xpsocial_marca" name="xpsocial_marca" value="<?php echo esc_attr($marca); ?>" class="regular-text" />
+                    <p class="description">Marca específica para este formulario (ej: Imperial, Kerns, etc.)</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="xpsocial_country">País</label></th>
+                <td>
+                    <input type="text" id="xpsocial_country" name="xpsocial_country" value="<?php echo esc_attr($country); ?>" class="regular-text" />
+                    <p class="description">País específico para este formulario</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="xpsocial_show_terms">Mostrar Términos</label></th>
+                <td>
+                    <input type="checkbox" id="xpsocial_show_terms" name="xpsocial_show_terms" value="1" <?php checked($show_terms, '1'); ?> />
+                    <label for="xpsocial_show_terms">Mostrar checkbox de términos y condiciones</label>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="xpsocial_show_privacy">Mostrar Privacidad</label></th>
+                <td>
+                    <input type="checkbox" id="xpsocial_show_privacy" name="xpsocial_show_privacy" value="1" <?php checked($show_privacy, '1'); ?> />
+                    <label for="xpsocial_show_privacy">Mostrar checkbox de política de privacidad</label>
+                </td>
+            </tr>
+        </table>
+        <?php
+    }
+
+    /**
+     * Meta box de campos dinámicos
+     */
+    public function form_fields_meta_box($post)
+    {
+        $dynamic_fields = get_post_meta($post->ID, '_xpsocial_dynamic_fields', true);
+        $fields = array();
+        
+        if ($dynamic_fields) {
+            $fields = is_string($dynamic_fields) ? json_decode($dynamic_fields, true) : $dynamic_fields;
+            if (!is_array($fields)) {
+                $fields = array();
+            }
+        }
+        
+        ?>
+        <div id="dynamic-fields-container">
+            <p class="description">Agrega campos dinámicos que aparecerán en el formulario antes de los términos y privacidad.</p>
+            
+            <div id="fields-list">
+                <?php if (!empty($fields)): ?>
+                    <?php foreach ($fields as $index => $field): ?>
+                        <div class="field-item" data-index="<?php echo $index; ?>">
+                            <div class="field-header">
+                                <h4>Campo <?php echo $index + 1; ?></h4>
+                                <button type="button" class="button remove-field">Eliminar</button>
+                            </div>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><label>Etiqueta</label></th>
+                                    <td><input type="text" name="fields[<?php echo $index; ?>][label]" value="<?php echo esc_attr($field['label']); ?>" class="regular-text" /></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><label>Nombre del Campo</label></th>
+                                    <td><input type="text" name="fields[<?php echo $index; ?>][name]" value="<?php echo esc_attr($field['name']); ?>" class="regular-text" /></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><label>Tipo</label></th>
+                                    <td>
+                                        <select name="fields[<?php echo $index; ?>][type]">
+                                            <option value="text" <?php selected($field['type'], 'text'); ?>>Texto</option>
+                                            <option value="textarea" <?php selected($field['type'], 'textarea'); ?>>Área de Texto</option>
+                                            <option value="select" <?php selected($field['type'], 'select'); ?>>Lista Desplegable</option>
+                                            <option value="radio" <?php selected($field['type'], 'radio'); ?>>Botones de Radio</option>
+                                            <option value="checkbox" <?php selected($field['type'], 'checkbox'); ?>>Casillas de Verificación</option>
+                                            <option value="audio" <?php selected($field['type'], 'audio'); ?>>Audio</option>
+                                            <option value="image" <?php selected($field['type'], 'image'); ?>>Imagen</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><label>Requerido</label></th>
+                                    <td>
+                                        <input type="checkbox" name="fields[<?php echo $index; ?>][required]" value="1" <?php checked($field['required'], '1'); ?> />
+                                        <label>Este campo es obligatorio</label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><label>Placeholder</label></th>
+                                    <td><input type="text" name="fields[<?php echo $index; ?>][placeholder]" value="<?php echo esc_attr($field['placeholder']); ?>" class="regular-text" /></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><label>Opciones (para select, radio, checkbox)</label></th>
+                                    <td>
+                                        <textarea name="fields[<?php echo $index; ?>][options]" rows="3" cols="50" class="large-text"><?php echo esc_textarea($field['options']); ?></textarea>
+                                        <p class="description">Una opción por línea</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+            
+            <button type="button" id="add-field" class="button button-secondary">Agregar Campo</button>
+        </div>
+
+        <script>
+        jQuery(document).ready(function($) {
+            var fieldIndex = <?php echo count($fields); ?>;
+            
+            $('#add-field').click(function() {
+                var fieldHtml = `
+                    <div class="field-item" data-index="${fieldIndex}">
+                        <div class="field-header">
+                            <h4>Campo ${fieldIndex + 1}</h4>
+                            <button type="button" class="button remove-field">Eliminar</button>
+                        </div>
+                        <table class="form-table">
+                            <tr>
+                                <th scope="row"><label>Etiqueta</label></th>
+                                <td><input type="text" name="fields[${fieldIndex}][label]" value="" class="regular-text" /></td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><label>Nombre del Campo</label></th>
+                                <td><input type="text" name="fields[${fieldIndex}][name]" value="" class="regular-text" /></td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><label>Tipo</label></th>
+                                <td>
+                                    <select name="fields[${fieldIndex}][type]">
+                                        <option value="text">Texto</option>
+                                        <option value="textarea">Área de Texto</option>
+                                        <option value="select">Lista Desplegable</option>
+                                        <option value="radio">Botones de Radio</option>
+                                        <option value="checkbox">Casillas de Verificación</option>
+                                        <option value="audio">Audio</option>
+                                        <option value="image">Imagen</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><label>Requerido</label></th>
+                                <td>
+                                    <input type="checkbox" name="fields[${fieldIndex}][required]" value="1" />
+                                    <label>Este campo es obligatorio</label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><label>Placeholder</label></th>
+                                <td><input type="text" name="fields[${fieldIndex}][placeholder]" value="" class="regular-text" /></td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><label>Opciones (para select, radio, checkbox)</label></th>
+                                <td>
+                                    <textarea name="fields[${fieldIndex}][options]" rows="3" cols="50" class="large-text"></textarea>
+                                    <p class="description">Una opción por línea</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                `;
+                
+                $('#fields-list').append(fieldHtml);
+                fieldIndex++;
+            });
+            
+            $(document).on('click', '.remove-field', function() {
+                $(this).closest('.field-item').remove();
+            });
+        });
+        </script>
+
+        <style>
+        .field-item {
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+        }
+        .field-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .field-header h4 {
+            margin: 0;
+        }
+        </style>
+        <?php
+    }
+
+    /**
+     * Guardar meta datos del formulario
+     */
+    public function save_form_meta($post_id)
+    {
+        // Solo procesar nuestro CPT
+        if (get_post_type($post_id) !== 'xpsocial_form') {
+            return;
+        }
+        
+        if (!isset($_POST['xpsocial_form_meta_nonce']) || 
+            !wp_verify_nonce($_POST['xpsocial_form_meta_nonce'], 'xpsocial_form_meta')) {
+            return;
+        }
+
+        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+            return;
+        }
+
+        if (!current_user_can('edit_post', $post_id)) {
+            return;
+        }
+
+        // Guardar configuración básica
+        $fields_to_save = array(
+            '_xpsocial_source',
+            '_xpsocial_success_html',
+            '_xpsocial_fifco_enabled',
+            '_xpsocial_marca',
+            '_xpsocial_country',
+            '_xpsocial_show_terms',
+            '_xpsocial_show_privacy'
+        );
+
+        foreach ($fields_to_save as $field) {
+            $post_key = str_replace('_xpsocial_', 'xpsocial_', $field);
+            if (isset($_POST[$post_key])) {
+                $value = sanitize_text_field($_POST[$post_key]);
+                update_post_meta($post_id, $field, $value);
+            } else {
+                // Para checkboxes, si no están presentes, significa que están desmarcados
+                if (in_array($field, ['_xpsocial_fifco_enabled', '_xpsocial_show_terms', '_xpsocial_show_privacy'])) {
+                    update_post_meta($post_id, $field, '0');
+                } else {
+                    delete_post_meta($post_id, $field);
+                }
+            }
+        }
+
+        // Guardar campos dinámicos
+        if (isset($_POST['fields']) && is_array($_POST['fields'])) {
+            $fields = array();
+            foreach ($_POST['fields'] as $field) {
+                if (!empty($field['label']) && !empty($field['name'])) {
+                    $fields[] = array(
+                        'label' => sanitize_text_field($field['label']),
+                        'name' => sanitize_text_field($field['name']),
+                        'type' => sanitize_text_field($field['type']),
+                        'required' => isset($field['required']) ? '1' : '0',
+                        'options' => sanitize_textarea_field($field['options']),
+                        'placeholder' => sanitize_text_field($field['placeholder'])
+                    );
+                }
+            }
+            // Guardar como JSON string
+            update_post_meta($post_id, '_xpsocial_dynamic_fields', json_encode($fields));
+        } else {
+            delete_post_meta($post_id, '_xpsocial_dynamic_fields');
+        }
+    }
+
+    /**
+     * Agregar columnas personalizadas
+     */
+    public function custom_columns($columns)
+    {
+        $new_columns = array();
+        $new_columns['cb'] = $columns['cb'];
+        $new_columns['title'] = $columns['title'];
+        $new_columns['source'] = 'Source';
+        $new_columns['marca'] = 'Marca FIFCO';
+        $new_columns['dynamic_fields'] = 'Campos Dinámicos';
+        $new_columns['date'] = $columns['date'];
+        
+        return $new_columns;
+    }
+
+    /**
+     * Contenido de columnas personalizadas
+     */
+    public function custom_column_content($column, $post_id)
+    {
+        switch ($column) {
+            case 'source':
+                $source = get_post_meta($post_id, '_xpsocial_source', true);
+                echo $source ? esc_html($source) : 'No configurado';
+                break;
+                
+            case 'marca':
+                $marca = get_post_meta($post_id, '_xpsocial_marca', true);
+                echo $marca ? esc_html($marca) : 'No configurado';
+                break;
+                
+            case 'dynamic_fields':
+                $dynamic_fields = get_post_meta($post_id, '_xpsocial_dynamic_fields', true);
+                if ($dynamic_fields) {
+                    $fields_data = is_string($dynamic_fields) ? json_decode($dynamic_fields, true) : $dynamic_fields;
+                    $count = is_array($fields_data) ? count($fields_data) : 0;
+                    echo $count . ' campos';
+                } else {
+                    echo '0 campos';
+                }
+                break;
+        }
+    }
+
+    /**
+     * Obtener configuración de formulario por source
+     */
+    public static function get_form_config_by_source($source)
+    {
+        $posts = get_posts(array(
+            'post_type' => 'xpsocial_form',
+            'meta_key' => '_xpsocial_source',
+            'meta_value' => $source,
+            'post_status' => 'publish',
+            'numberposts' => 1
+        ));
+
+        if (empty($posts)) {
+            return null;
+        }
+
+        $post = $posts[0];
+        $config = array(
+            'source' => $source,
+            'success_html' => get_post_meta($post->ID, '_xpsocial_success_html', true),
+            'fifco_enabled' => get_post_meta($post->ID, '_xpsocial_fifco_enabled', true),
+            'marca' => get_post_meta($post->ID, '_xpsocial_marca', true),
+            'country' => get_post_meta($post->ID, '_xpsocial_country', true),
+            'show_terms' => get_post_meta($post->ID, '_xpsocial_show_terms', true),
+            'show_privacy' => get_post_meta($post->ID, '_xpsocial_show_privacy', true),
+            'dynamic_fields' => array()
+        );
+
+        // Obtener campos dinámicos
+        $dynamic_fields = get_post_meta($post->ID, '_xpsocial_dynamic_fields', true);
+        if ($dynamic_fields) {
+            $config['dynamic_fields'] = is_string($dynamic_fields) ? json_decode($dynamic_fields, true) : $dynamic_fields;
+            if (!is_array($config['dynamic_fields'])) {
+                $config['dynamic_fields'] = array();
+            }
+        }
+
+        return $config;
+    }
+}

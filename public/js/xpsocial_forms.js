@@ -87,12 +87,25 @@ document.addEventListener("DOMContentLoaded", function () {
                 method: "GET",
                 redirect: "follow",
             };
+            
             fetch(url, requestOptions)
-            .then((response) => response.json())
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then((data) => {
-                let countries = JSON.parse(JSON.stringify(data));
-              // console.log(JSON.parse(JSON.stringify(countries)));
-              // Ordenar los países por phonecode
+                
+                // Verificar si la respuesta tiene la estructura esperada
+                let countries = [];
+                if (data && data.data && Array.isArray(data.data)) {
+                    countries = data.data;
+                } else if (Array.isArray(data)) {
+                    countries = data;
+                } else {
+                    throw new Error("Invalid data structure received from API");
+                }
 
                 countrySelect.disabled = false;
                 countrySelectCode.disabled = false;
@@ -132,7 +145,17 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                 }
             })
-            .catch((error) => console.error("Error fetching countries:", error));
+            .catch((error) => {
+                // Mostrar mensaje de error al usuario
+                if (countrySelect) {
+                    countrySelect.innerHTML = '<option value="">Error al cargar países</option>';
+                    countrySelect.disabled = true;
+                }
+                if (countrySelectCode) {
+                    countrySelectCode.innerHTML = '<option value="">Error al cargar códigos</option>';
+                    countrySelectCode.disabled = true;
+                }
+            });
         }
 
         function fetchProvinces(countryCode)
@@ -142,15 +165,30 @@ document.addEventListener("DOMContentLoaded", function () {
                 redirect: "follow",
             };
             const host = window.location.origin;
-            const url =
-            host + "/wp-json/geo-api/v1/selected-states?country_id=" + countryCode;
+            const url = host + "/wp-json/geo-api/v1/selected-states?country_id=" + countryCode;
+            
             fetch(url, requestOptions)
-            .then((response) => response.json())
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then((data) => {
-                let provinces = data;
+                
+                // Verificar si la respuesta tiene la estructura esperada
+                let provinces = [];
+                if (data && data.data && Array.isArray(data.data)) {
+                    provinces = data.data;
+                } else if (Array.isArray(data)) {
+                    provinces = data;
+                } else {
+                    throw new Error("Invalid data structure received from provinces API");
+                }
+                
                 provinceSelect.disabled = false;
-                provinceSelect.innerHTML =
-                '<option value="">Seleccione una provincia</option>';
+                provinceSelect.innerHTML = '<option value="">Seleccione una provincia</option>';
+                
                 provinces.forEach((province) => {
                     let option = document.createElement("option");
                     option.value = province.name;
@@ -158,7 +196,13 @@ document.addEventListener("DOMContentLoaded", function () {
                     provinceSelect.add(option);
                 });
             })
-            .catch((error) => console.error("Error fetching provinces:", error));
+            .catch((error) => {
+                // Mostrar mensaje de error al usuario
+                if (provinceSelect) {
+                    provinceSelect.innerHTML = '<option value="">Error al cargar provincias</option>';
+                    provinceSelect.disabled = true;
+                }
+            });
         }
     }
 });

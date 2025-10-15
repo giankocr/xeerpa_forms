@@ -15,7 +15,7 @@
  * Plugin Name:       XPSocial Login
  * Plugin URI:        https://gianko.com/
  * Description:       Plugin para conectar wordpress con los api de Xeerpa Social.
- * Version:           3.1.1
+ * Version:           5.0.0
  * Author:            giankocr
  * Author URI:        https://gianko.com/
  * License:           GPL-2.0+
@@ -72,6 +72,12 @@ require plugin_dir_path(__FILE__) . 'includes/class-xpsocial_login.php';
 require plugin_dir_path(__FILE__) . 'includes/opciones.php';
 require plugin_dir_path(__FILE__) . 'includes/recomendador.php'; // TODO- configurar el recomendador
 
+/*
+*   Include Custom Post Type for forms and leads manager
+*/
+require plugin_dir_path(__FILE__) . 'includes/class-xpsocial_forms-cpt.php';
+require plugin_dir_path(__FILE__) . 'includes/class-xpsocial_leads-manager.php';
+
 register_activation_hook(__FILE__, 'activate_xpsocial_login');
 register_deactivation_hook(__FILE__, 'deactivate_xpsocial_login');
 
@@ -111,3 +117,9 @@ function run_xpsocial_login()
 // Admin bar functionality removed - no longer managing user roles
 
 run_xpsocial_login();
+
+// Initialize Custom Post Type for forms
+new Xpsocial_Forms_CPT();
+
+// Initialize Leads Manager
+Xpsocial_Leads_Manager::get_instance();
