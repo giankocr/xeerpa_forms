@@ -143,6 +143,49 @@ xpsocial_login/
 
 ---
 
+### Versión 3.1.3 - Selección Automática de País Único
+
+#### Cambios Realizados
+- **Archivo**: `public/js/xpsocial_forms.js`
+- **Acción**: Implementar selección automática cuando solo hay un país configurado
+- **Fecha**: $(date)
+
+#### Detalles de la Modificación
+1. **Funcionalidad implementada**:
+   - **Detección automática**: Cuando solo hay un país configurado, se selecciona automáticamente
+   - **Carga de provincias**: Se cargan automáticamente las provincias del país único
+   - **Ocultación de placeholder**: Se oculta el texto "Seleccione un país" cuando está preseleccionado
+   - **Código de teléfono**: También se preselecciona el código de teléfono correspondiente
+
+2. **Mejoras en la experiencia del usuario**:
+   - **Menos clics**: El usuario no necesita seleccionar el país si solo hay uno disponible
+   - **Flujo más rápido**: Se cargan automáticamente las provincias del país único
+   - **Interfaz más limpia**: Se oculta el placeholder innecesario
+
+3. **Lógica implementada**:
+   ```javascript
+   // Si solo hay un país configurado, seleccionarlo automáticamente
+   const shouldAutoSelect = countries.length === 1;
+   
+   // Marcar como seleccionado si es el único país
+   if (shouldAutoSelect) {
+       option.selected = true;
+   }
+   
+   // Cargar provincias automáticamente
+   if (shouldAutoSelect && countries.length > 0) {
+       fetchProvinces(firstCountry.country_id);
+   }
+   ```
+
+#### Beneficios de la Modificación
+- **Mejor UX**: Experiencia más fluida para usuarios con un solo país configurado
+- **Menos fricción**: Reduce pasos innecesarios en el formulario
+- **Automatización inteligente**: Solo se activa cuando realmente hay un solo país
+- **Compatibilidad**: Funciona con ambos formularios (con y sin redes sociales)
+
+---
+
 ## Próximas Modificaciones
 
 ### Pendientes de Definir

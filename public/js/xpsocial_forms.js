@@ -109,17 +109,41 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 countrySelect.disabled = false;
                 countrySelectCode.disabled = false;
+                
+                // Si solo hay un país configurado, seleccionarlo automáticamente
+                const shouldAutoSelect = countries.length === 1;
+                
                 countries.forEach((country) => {
                     let option = document.createElement("option");
                     option.value = country.country_id;
                     option.text = country.emoji + " " + country.name;
+                    // Si solo hay un país, marcarlo como seleccionado
+                    if (shouldAutoSelect) {
+                        option.selected = true;
+                    }
                     countrySelect.add(option);
 
                     let optioncode = document.createElement("option");
                     optioncode.value = country.phone_code;
                     optioncode.text = country.emoji + " " + country.phone_code;
+                    // Si solo hay un país, marcar también el código como seleccionado
+                    if (shouldAutoSelect) {
+                        optioncode.selected = true;
+                    }
                     countrySelectCode.add(optioncode);
                 });
+                
+                // Si solo hay un país, cargar automáticamente las provincias
+                if (shouldAutoSelect && countries.length > 0) {
+                    const firstCountry = countries[0];
+                    fetchProvinces(firstCountry.country_id);
+                    
+                    // Ocultar el placeholder del país ya que está seleccionado
+                    const placeholderOption = countrySelect.querySelector('option.placeholder');
+                    if (placeholderOption) {
+                        placeholderOption.style.display = 'none';
+                    }
+                }
             })
             .catch((error) => console.error("Error fetching countries:", error));
         }
