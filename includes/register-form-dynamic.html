@@ -16,14 +16,14 @@
             <span id="messagelogin"></span>
         </div>
         <span id="login-message"></span>
-        <div class="form-row">
-            <div class="form-col">
+        <div class="two-columns columns-wrap">
+            <div>
                 <label for="field_firstname">Nombre</label>
                 <input name="field_firstname" id="field_firstname" type="text" value="" required autocomplete="off" 
                        pattern="[A-Za-zÀ-ÿ\s]+" 
                        title="Ingrese su nombre. Solo se permiten letras y espacios.">
             </div>
-            <div class="form-col">
+            <div>
                 <label for="field_lastname">Apellidos</label>
                 <input name="field_lastname" id="field_lastname" type="text" value="" required autocomplete="off" 
                        pattern="[A-Za-zÀ-ÿ\s]+" 
@@ -35,14 +35,14 @@
             <input name="field_email" id="field_email" type="email" value="" 
             title="Formato de correo electrónico inválido.">
         </div>
-        <div class="form-row">
-            <div class="form-col">
+        <div class="two-columns columns-wrap">
+            <div>
                 <label for="field_birthday">Fecha de Nacimiento</label>
                 <input name="field_birthday" id="field_birthday" type="date" value="" class="field_birthday" 
                        placeholder="Fecha de Nacimiento" required autocomplete="off" 
                        title="Seleccione su fecha de nacimiento.">
             </div>
-            <div class="form-col">
+            <div>
                 <label for="field_gender">Género</label>
                 <select name="field_gender" id="field_gender" required autocomplete="off" 
                         title="Seleccione su género.">
@@ -53,39 +53,37 @@
                 </select>
             </div>
         </div>
-        <div class="form-row">
-            <div class="form-col">
-                <label for="field_countryPhoneCode">Código + Teléfono</label>
+        <div class="two-columns columns-wrap phone-select-container">
+            <div class="phone_field">
                 <div class="select-container">
-                    <span>
+                    <label for="field_countryPhoneCode">Código + Teléfono</label>
+                    <span >
                         <select name="field_countryPhoneCode" id="field_countryPhoneCode" required autocomplete="off" 
                                 title="Seleccione el código de país.">
                             <option value="" disabled selected class="placeholder">Código</option>
                         </select>
-                    </span>
-                    <span>
                         <input name="field_phone" id="field_phone" type="tel" value="" required autocomplete="off" 
                                placeholder="Número de teléfono" 
                                title="Ingrese su número de teléfono.">
                     </span>
                 </div>
             </div>
-            <div class="form-col">
+            <div>
                 <label for="field_id">Número de cédula / Identificación</label>
                 <input name="field_id" id="field_id" type="text" value="" required autocomplete="off" 
                        placeholder="Número de cédula" 
                        title="Ingrese su número de cédula o identificación.">
             </div>
         </div>
-        <div class="form-row">
-            <div class="form-col">
+        <div class="two-columns">
+            <div>
                 <label for="field_country">País</label>
                 <select name="field_country" id="field_country" required autocomplete="off" 
                         title="Seleccione su país.">
                     <option value="" disabled selected class="placeholder">Seleccione un país</option>
                 </select>
             </div>
-            <div class="form-col">
+            <div>
                 <label for="field_province">Provincia</label>
                 <select name="field_province" id="field_province" required autocomplete="off" 
                         title="Seleccione su provincia.">
@@ -153,12 +151,12 @@
                         </div>
                     
                     <?php elseif ($field['type'] == 'checkbox'): ?>
-                        <div class="checkbox-group">
+                        <div class="checkbox-group" style="display: flex; flex-wrap: wrap; gap: 15px;">
                             <?php if (!empty($field['options'])): ?>
                                 <?php foreach (explode("\n", $field['options']) as $index => $option): ?>
                                     <?php $option = trim($option); ?>
                                     <?php if (!empty($option)): ?>
-                                        <label class="checkbox-option">
+                                        <label class="checkbox-option" style="display: flex; align-items: center; gap: 5px; white-space: nowrap;">
                                             <input type="checkbox" 
                                                    name="dynamic_<?php echo esc_attr($field['name']); ?>[]" 
                                                    value="<?php echo esc_attr($option); ?>">
@@ -191,20 +189,23 @@
 
         <!-- Términos y Condiciones -->
         <?php if ($form_config['show_terms']): ?>
-            <div class="checkbox-group">
-                <input type="checkbox" id="field_terms" name="field_terms" value="si" required autocomplete="off">
+            <div>
                 <label for="field_terms">
-                    Acepto términos y condiciones <span class="ver-link">Ver</span>
+                    <input type="checkbox" name="field_terms" id="field_terms" value="si" required autocomplete="off"
+                           title="Debes aceptar los términos y condiciones.">
+                    Acepto términos y condiciones <a href="<?php echo esc_url(get_option('xpsocial_linkTyC')); ?>">Ver</a>
                 </label>
             </div>
         <?php endif; ?>
 
         <!-- Política de Privacidad -->
         <?php if ($form_config['show_privacy']): ?>
-            <div class="checkbox-group">
-                <input type="checkbox" id="field_privacy" name="field_privacy" value="si" required autocomplete="off">
+            <div>
                 <label for="field_privacy">
-                    Estoy de acuerdo en recibir comunicaciones y novedades por parte de <strong><?php echo esc_html($form_config['marca'] ?: 'IMPERIAL'); ?></strong>. <span class="ver-link">Políticas de privacidad</span>
+                    <input type="checkbox" name="field_privacy" id="field_privacy" value="si" required autocomplete="off"
+                           title="Debes aceptar las políticas de privacidad.">
+                    Estoy de acuerdo en recibir comunicaciones y novedades por parte de <strong><?php echo esc_html($form_config['marca'] ?: 'IMPERIAL'); ?></strong>. 
+                    <a href="<?php echo esc_url(get_option('xpsocial_linkPP')); ?>">Políticas de privacidad</a>
                 </label>
             </div>
         <?php endif; ?>
@@ -216,7 +217,7 @@
         <input type="hidden" name="desobfuscatedToken" value="">
 
         <div>
-            <button type="submit" id="submit_register" class="btn-submit">Registrarme</button>
+            <input type="submit" id="xp-registro-social" class="xp-boton-registro xp_button" value="Registrarme">
         </div>
     </form>
 </div>

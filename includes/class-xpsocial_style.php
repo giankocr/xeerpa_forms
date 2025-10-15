@@ -62,7 +62,7 @@ function xpsocial_enqueue_styles_forms()
         height: {$xp_input_height}px;
         width: 100%;
         padding: 5px;
-        border: {$xp_input_border} !important;
+        border: {$xp_input_border};
     }
     * Estilo para las opciones del select */
     .register_form select option {

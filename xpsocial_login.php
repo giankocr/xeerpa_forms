@@ -121,5 +121,7 @@ run_xpsocial_login();
 // Initialize Custom Post Type for forms
 new Xpsocial_Forms_CPT();
 
-// Initialize Leads Manager
-Xpsocial_Leads_Manager::get_instance();
+// Initialize Leads Manager after WordPress is fully loaded
+add_action('init', function() {
+    Xpsocial_Leads_Manager::get_instance();
+}, 20);

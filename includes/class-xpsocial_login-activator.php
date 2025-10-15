@@ -53,44 +53,100 @@ class Xpsocial_login_Activator
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-        // Check if table exists and clean duplicates before adding constraints
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") == $table_name;
+        // Check if table exists - compatible with both MySQL and SQLite
+        $table_exists = false;
         
-        $sql = "CREATE TABLE {$table_name} (
-            id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-            `Marca` VARCHAR(120) NULL,
-            `IDNumber` VARCHAR(100) NULL,
-            `EmailAddress` VARCHAR(190) NULL,
-            `FirstName` VARCHAR(100) NULL,
-            `SecondName` VARCHAR(100) NULL,
-            `LastName` VARCHAR(100) NULL,
-            `SecondLastName` VARCHAR(100) NULL,
-            `Gender` VARCHAR(30) NULL,
-            `BirthDate` VARCHAR(20) NULL,
-            `MobileNumber` VARCHAR(50) NULL,
-            `Province` VARCHAR(120) NULL,
-            `Country` VARCHAR(120) NULL,
-            `UserRegisterSocial` VARCHAR(50) NULL,
-            `CaptureDate` VARCHAR(20) NULL,
-            `ModifiedDate` VARCHAR(20) NULL,
-            `PoliticasPrivacidad` VARCHAR(5) NULL,
-            `AceptaComunicaciones` VARCHAR(5) NULL,
-            `Source` VARCHAR(180) NULL,
-            snid VARCHAR(190) NULL,
-            it_token TEXT NULL,
-            id_token TEXT NULL,
-            dynamic_fields TEXT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            UNIQUE KEY uniq_email_source (EmailAddress, Source),
-            UNIQUE KEY uniq_id_source (IDNumber, Source),
-            PRIMARY KEY  (id)
-        ) {$charset_collate};";
+        if ($wpdb->dbh instanceof PDO) {
+            // SQLite
+            $result = $wpdb->get_var($wpdb->prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=%s", $table_name));
+            $table_exists = ($result == $table_name);
+        } else {
+            // MySQL
+            $result = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name));
+            $table_exists = ($result == $table_name);
+        }
+        
+        // Check if we're using SQLite or MySQL
+        $is_sqlite = ($wpdb->dbh instanceof PDO);
+        
+        if ($is_sqlite) {
+            // SQLite compatible SQL
+            $sql = "CREATE TABLE {$table_name} (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Marca TEXT,
+                IDNumber TEXT,
+                EmailAddress TEXT,
+                FirstName TEXT,
+                SecondName TEXT,
+                LastName TEXT,
+                SecondLastName TEXT,
+                Gender TEXT,
+                BirthDate TEXT,
+                MobileNumber TEXT,
+                Province TEXT,
+                Country TEXT,
+                UserRegisterSocial TEXT,
+                CaptureDate TEXT,
+                ModifiedDate TEXT,
+                PoliticasPrivacidad TEXT,
+                AceptaComunicaciones TEXT,
+                Source TEXT,
+                snid TEXT,
+                it_token TEXT,
+                id_token TEXT,
+                dynamic_fields TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(EmailAddress, Source),
+                UNIQUE(IDNumber, Source)
+            );";
+        } else {
+            // MySQL compatible SQL
+            $sql = "CREATE TABLE {$table_name} (
+                id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+                `Marca` VARCHAR(120) NULL,
+                `IDNumber` VARCHAR(100) NULL,
+                `EmailAddress` VARCHAR(190) NULL,
+                `FirstName` VARCHAR(100) NULL,
+                `SecondName` VARCHAR(100) NULL,
+                `LastName` VARCHAR(100) NULL,
+                `SecondLastName` VARCHAR(100) NULL,
+                `Gender` VARCHAR(30) NULL,
+                `BirthDate` VARCHAR(20) NULL,
+                `MobileNumber` VARCHAR(50) NULL,
+                `Province` VARCHAR(120) NULL,
+                `Country` VARCHAR(120) NULL,
+                `UserRegisterSocial` VARCHAR(50) NULL,
+                `CaptureDate` VARCHAR(20) NULL,
+                `ModifiedDate` VARCHAR(20) NULL,
+                `PoliticasPrivacidad` VARCHAR(5) NULL,
+                `AceptaComunicaciones` VARCHAR(5) NULL,
+                `Source` VARCHAR(180) NULL,
+                snid VARCHAR(190) NULL,
+                it_token TEXT NULL,
+                id_token TEXT NULL,
+                dynamic_fields TEXT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY uniq_email_source (EmailAddress, Source),
+                UNIQUE KEY uniq_id_source (IDNumber, Source),
+                PRIMARY KEY  (id)
+            ) {$charset_collate};";
+        }
 
-        dbDelta($sql);
-
-        // Log table creation
-        error_log('XPSocial: Table wp_xpsocial_leads created successfully');
+        if ($is_sqlite) {
+            // For SQLite, use direct query instead of dbDelta
+            $result = $wpdb->query($sql);
+            if ($result === false) {
+                error_log('XPSocial: Error creating table with direct query: ' . $wpdb->last_error);
+            } else {
+                error_log('XPSocial: Table wp_xpsocial_leads created successfully (SQLite)');
+            }
+        } else {
+            // For MySQL, use dbDelta
+            dbDelta($sql);
+            error_log('XPSocial: Table wp_xpsocial_leads created successfully (MySQL)');
+        }
     }
 
     /**
@@ -145,5 +201,17 @@ class Xpsocial_login_Activator
 
         // Log options initialization
         error_log('XPSocial: Default options initialized successfully');
+    }
+
+    /**
+     * Create the custom table manually (for troubleshooting)
+     * This method can be called to create the table if it doesn't exist
+     *
+     * @since    1.0.0
+     */
+    public static function create_table_manually()
+    {
+        self::create_custom_table();
+        error_log('XPSocial: Table creation attempted manually');
     }
 }

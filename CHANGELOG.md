@@ -2361,4 +2361,119 @@ Si el error persiste, verificar:
 
 ---
 
+## [3.1.19] - 2025-10-15
+
+### Corrección de Compatibilidad con SQLite y MySQL
+- **Problema identificado**: `dbDelta` no es compatible con SQLite, causaba errores de creación de tabla
+- **Solución implementada**: Uso de `$wpdb->query()` directamente para SQLite y `dbDelta` para MySQL
+- **Detección mejorada**: Mejorada la detección de SQLite incluyendo `WP_SQLite_DB` y `PDO`
+- **Verificación robusta**: Agregada verificación doble de existencia de tabla antes del guardado
+- **Logging optimizado**: Reducido el logging excesivo, solo se registra cuando hay problemas
+- **Corrección de advertencia**: Corregida la advertencia `Undefined array key "REQUEST_METHOD"`
+- **Inicialización mejorada**: El gestor de leads se inicializa en el hook `init` con prioridad 20
+- **Resultado**: El formulario ahora guarda correctamente los datos en ambas bases de datos
+
+## [3.1.20] - 2025-10-15
+
+### Corrección de Mapeo de Datos del Formulario
+- **Género**: Corregido mapeo para guardar "Masculino", "Femenino", "No Binario" en lugar de "m", "f", "nb"
+- **País**: Corregido para guardar el nombre completo del país en lugar del ID numérico
+- **Source**: Implementado shortcode dinámico que toma el source del atributo del shortcode `[xpsocial_register_form source="formulario_audio_2025"]`
+- **Términos y Privacidad**: Corregido mapeo para guardar "Sí"/"No" en base de datos y mantener true/false para sistema externo
+- **Shortcode dinámico**: Creado nuevo shortcode que renderiza formularios basados en configuración del CPT
+- **Compatibilidad**: Mantenida compatibilidad con sistema externo usando valores true/false
+
+## [3.1.21] - 2025-10-15
+
+### Corrección de Distribución de Campos en Formulario Dinámico
+- **Estructura de columnas**: Corregida para usar `two-columns` y `columns-wrap` como el formulario original
+- **Campos principales**: Mantienen distribución de dos columnas (Nombre/Apellidos, Fecha/Género, Teléfono/Cédula, País/Provincia)
+- **Campos dinámicos**: Mantienen distribución de una sola columna (`form-group`)
+- **Consistencia visual**: El formulario dinámico ahora tiene la misma apariencia que el formulario original
+- **Clases CSS**: Actualizadas para usar las mismas clases que el template original
+
+## [3.1.22] - 2025-10-15
+
+### Corrección de Checkboxes en Formulario Dinámico
+- **Checkboxes principales**: Corregidos para estar en una sola línea con input dentro del label
+- **Links funcionales**: Agregados links reales a términos y condiciones y políticas de privacidad
+- **Checkboxes dinámicos**: Modificados para mostrarse en línea horizontal con flexbox
+- **Estructura consistente**: Los checkboxes ahora siguen la misma estructura que el formulario original
+- **Estilos inline**: Agregados estilos CSS inline para asegurar que los checkboxes dinámicos se muestren en línea
+
+## [3.1.23] - 2025-10-15
+
+### Corrección de Estilos del Botón Submit
+- **Botón submit**: Corregido para usar las mismas clases CSS que el formulario original
+- **Clases aplicadas**: Cambiado de `btn-submit` a `xp-boton-registro xp_button`
+- **ID consistente**: Cambiado de `submit_register` a `xp-registro-social`
+- **Tipo de elemento**: Cambiado de `<button>` a `<input type="submit">` para consistencia
+- **Estilos del plugin**: Ahora el botón respeta los estilos configurados en el plugin
+
+## [3.1.24] - 2025-10-15
+
+### Aplicación Completa de Estilos del Plugin al Formulario Dinámico
+- **Estilos CSS dinámicos**: Agregados estilos CSS que respetan todas las configuraciones del plugin
+- **Configuraciones aplicadas**: 
+  - Altura de inputs (`xp_input_height`)
+  - Bordes de inputs (`xp_input_border`, `xp_input_border_radius`)
+  - Colores de fondo (`xp_bg_color`, `xp_div_color`)
+  - Colores de fuente (`xp_font_color`)
+  - Estilos del botón (`xp_btn_height`, `xp_btn_width`, `xp_btn_color`, `xp_btn_bgcolor`, `xp_btn_border_*`)
+- **Layout responsive**: Estilos para distribución de dos columnas y campos dinámicos
+- **Consistencia visual**: El formulario dinámico ahora respeta completamente la configuración del plugin
+- **Estilos inline**: CSS generado dinámicamente basado en las opciones del plugin
+
+## [3.1.25] - 2025-10-15
+
+### Refactorización de CSS: Movimiento de Estilos a Archivo Público
+- **CSS inline removido**: Eliminado CSS inline del template HTML del formulario dinámico
+- **Estilos en archivo público**: Movidos todos los estilos del formulario dinámico a `/public/css/xpsocial_login-public.css`
+- **CSS dinámico inteligente**: Implementado sistema de CSS dinámico que se aplica solo cuando hay formularios dinámicos en la página
+- **Detección automática**: El sistema detecta automáticamente si hay shortcodes `[xpsocial_register_form]` en la página
+- **Optimización de rendimiento**: CSS dinámico se genera solo cuando es necesario
+- **Configuraciones aplicadas**: Todas las configuraciones del plugin se aplican dinámicamente via CSS inline
+- **Separación de responsabilidades**: HTML limpio sin estilos inline, CSS organizado en archivo dedicado
+
+#### Beneficios de la Refactorización
+
+1. **✅ Código más limpio**: HTML sin estilos inline
+2. **✅ Mejor organización**: CSS centralizado en archivo público
+3. **✅ Rendimiento optimizado**: CSS dinámico solo cuando es necesario
+4. **✅ Mantenibilidad**: Fácil modificación de estilos
+5. **✅ Consistencia**: Misma estructura que otros archivos del plugin
+6. **✅ Escalabilidad**: Fácil agregar nuevos estilos
+
+## [3.1.26] - 2025-10-15
+
+### Mejoras en Estilos de Formulario: Configuración de Bordes Redondeados para Selects
+- **Selects mejorados**: Aplicada configuración de bordes redondeados a elementos `select`
+- **Tipos de input ampliados**: Agregados todos los tipos de input HTML5 al CSS
+- **Estilos específicos por tipo**: Implementados estilos personalizados para diferentes tipos de input
+- **Selects personalizados**: Eliminada apariencia nativa del navegador con flecha SVG personalizada
+- **Compatibilidad mejorada**: Estilos específicos para checkboxes, radio buttons, file inputs, range, color, etc.
+
+#### Tipos de Input Soportados
+
+1. **✅ Inputs básicos**: text, email, tel, date, password, number, search, url
+2. **✅ Inputs especiales**: file, range, color, datetime-local, month, time, week
+3. **✅ Inputs de selección**: checkbox, radio, hidden
+4. **✅ Elementos de formulario**: select, textarea
+
+#### Estilos Específicos Implementados
+
+- **Selects**: Apariencia personalizada con flecha SVG, bordes redondeados configurables
+- **Checkboxes/Radio**: Tamaño y espaciado optimizado
+- **File inputs**: Estilo dashed con hover effects
+- **Range inputs**: Slider personalizado con thumb redondeado
+- **Color inputs**: Tamaño fijo optimizado para selección de colores
+
+#### Configuraciones Aplicadas a Selects
+
+- **Bordes redondeados**: `border-radius` desde configuración del plugin
+- **Altura**: `height` desde configuración del plugin  
+- **Bordes**: `border` desde configuración del plugin
+- **Colores**: `background-color` y `color` desde configuración del plugin
+- **Apariencia personalizada**: Flecha SVG en lugar de nativa del navegador
+
 *Última actualización: $(date)*

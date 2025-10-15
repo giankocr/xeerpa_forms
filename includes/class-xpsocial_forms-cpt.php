@@ -812,3 +812,34 @@ class Xpsocial_Forms_CPT
         return $config;
     }
 }
+
+/**
+ * Shortcode para formulario dinámico con source
+ */
+function xpsocial_register_form_dynamic_shortcode($atts) {
+    $atts = shortcode_atts(array(
+        'source' => ''
+    ), $atts);
+    
+    if (empty($atts['source'])) {
+        return '<p>Error: Se requiere el atributo "source" en el shortcode.</p>';
+    }
+    
+    // Get form configuration from CPT
+    $form_config = Xpsocial_Forms_CPT::get_form_config_by_source($atts['source']);
+    
+    if (!$form_config) {
+        return '<p>Error: No se encontró configuración para el source "' . esc_html($atts['source']) . '".</p>';
+    }
+    
+    // Start output buffering
+    ob_start();
+    
+    // Include the dynamic form template
+    include plugin_dir_path(__FILE__) . 'register-form-dynamic.html';
+    
+    return ob_get_clean();
+}
+
+// Register the shortcode
+add_shortcode('xpsocial_register_form', 'xpsocial_register_form_dynamic_shortcode');

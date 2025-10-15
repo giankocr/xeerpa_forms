@@ -351,3 +351,253 @@ span.toggle-password {
       background: no-repeat center/contain;
       background-image: url('../images/eye-close.svg');
     }
+
+/* ========================================
+   ESTILOS DEL FORMULARIO DINÁMICO
+   ======================================== */
+
+/* Contenedor principal del formulario dinámico */
+.xpsocial-form {
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Estilos para inputs del formulario dinámico */
+.xpsocial-form input[type="text"],
+.xpsocial-form input[type="email"],
+.xpsocial-form input[type="tel"],
+.xpsocial-form input[type="date"],
+.xpsocial-form input[type="file"],
+.xpsocial-form input[type="password"],
+.xpsocial-form input[type="number"],
+.xpsocial-form input[type="search"],
+.xpsocial-form input[type="url"],
+.xpsocial-form input[type="checkbox"],
+.xpsocial-form input[type="radio"],
+.xpsocial-form input[type="hidden"],
+.xpsocial-form input[type="range"],
+.xpsocial-form input[type="color"],
+.xpsocial-form input[type="datetime-local"],
+.xpsocial-form input[type="month"],
+.xpsocial-form input[type="time"],
+.xpsocial-form input[type="week"],
+.xpsocial-form select,
+.xpsocial-form textarea {
+    padding: 8px 12px;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+/* Estilos específicos para selects */
+.xpsocial-form select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+    cursor: pointer;
+    min-height: 40px;
+    line-height: 1.4;
+}
+
+/* Estilos específicos para checkboxes y radio buttons */
+.xpsocial-form input[type="checkbox"],
+.xpsocial-form input[type="radio"] {
+    width: auto;
+    height: auto;
+    margin: 0 8px 0 0;
+    vertical-align: middle;
+}
+
+/* Estilos específicos para file inputs */
+.xpsocial-form input[type="file"] {
+    padding: 6px 8px;
+    border: 2px dashed #ced4da;
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+
+.xpsocial-form input[type="file"]:hover {
+    border-color: #007cba;
+    background-color: #e3f2fd;
+}
+
+/* Estilos específicos para range inputs */
+.xpsocial-form input[type="range"] {
+    height: 6px;
+    background: #ddd;
+    outline: none;
+    padding: 0;
+}
+
+.xpsocial-form input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #007cba;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+.xpsocial-form input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #007cba;
+    cursor: pointer;
+    border-radius: 50%;
+    border: none;
+}
+
+/* Estilos específicos para color inputs */
+.xpsocial-form input[type="color"] {
+    width: 60px;
+    height: 40px;
+    padding: 4px;
+    border: 1px solid #ced4da;
+    cursor: pointer;
+}
+
+.xpsocial-form input[type="text"]:focus,
+.xpsocial-form input[type="email"]:focus,
+.xpsocial-form input[type="tel"]:focus,
+.xpsocial-form input[type="date"]:focus,
+.xpsocial-form input[type="file"]:focus,
+.xpsocial-form input[type="password"]:focus,
+.xpsocial-form input[type="number"]:focus,
+.xpsocial-form input[type="search"]:focus,
+.xpsocial-form input[type="url"]:focus,
+.xpsocial-form input[type="checkbox"]:focus,
+.xpsocial-form input[type="radio"]:focus,
+.xpsocial-form input[type="hidden"]:focus,
+.xpsocial-form input[type="range"]:focus,
+.xpsocial-form input[type="color"]:focus,
+.xpsocial-form input[type="datetime-local"]:focus,
+.xpsocial-form input[type="month"]:focus,
+.xpsocial-form input[type="time"]:focus,
+.xpsocial-form input[type="week"]:focus,
+.xpsocial-form select:focus,
+.xpsocial-form textarea:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 123, 186, 0.25);
+}
+
+/* Botón del formulario dinámico */
+.xpsocial-form .xp-boton-registro.xp_button {
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    outline: none;
+}
+
+.xpsocial-form .xp-boton-registro.xp_button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.xpsocial-form .xp-boton-registro.xp_button:active {
+    transform: translateY(0);
+}
+
+/* Layout de dos columnas */
+.xpsocial-form .two-columns {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.xpsocial-form .two-columns > div {
+    flex: 1;
+}
+
+.xpsocial-form .two-columns.columns-wrap {
+    flex-wrap: wrap;
+}
+
+/* Campo de teléfono */
+
+.xpsocial-form .phone_field .select-container {
+    display: flex;
+    gap: 5px;
+}
+.two-columns.columns-wrap.phone-select-container {
+  align-items: flex-end;
+}
+
+.xpsocial-form .phone_field .select-container span {
+    flex: 1;
+}
+
+.xpsocial-form .phone_field .select-container span:first-child {
+    flex: 0 0 120px;
+}
+
+/* Labels */
+.xpsocial-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+/* Grupos de formulario */
+.xpsocial-form .form-group {
+    margin-bottom: 15px;
+}
+
+.xpsocial-form .checkbox-group {
+    margin-bottom: 15px;
+}
+
+/* Checkboxes */
+.xpsocial-form .checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.xpsocial-form .checkbox-group input[type="checkbox"] {
+    width: auto;
+    height: auto;
+    margin: 0;
+}
+
+/* Campos requeridos */
+.xpsocial-form .required {
+    color: #dc3545;
+}
+
+/* Enlaces */
+.xpsocial-form a {
+    text-decoration: underline;
+    transition: opacity 0.3s ease;
+}
+
+.xpsocial-form a:hover {
+    opacity: 0.8;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .xpsocial-form .two-columns {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .xpsocial-form .phone_field .select-container {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .xpsocial-form .phone_field .select-container span:first-child {
+        flex: 1;
+    }
+}

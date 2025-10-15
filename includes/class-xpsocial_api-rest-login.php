@@ -34,6 +34,13 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true'
     ));
     
+    // Endpoint temporal para crear la tabla de leads
+    register_rest_route('geo-api/v1', '/create-leads-table', array(
+        'methods' => 'POST',
+        'callback' => 'create_leads_table_endpoint',
+        'permission_callback' => '__return_true'
+    ));
+    
 });
 
 /**
@@ -154,7 +161,7 @@ function get_selected_states(WP_REST_Request $request)
     
     // Preparar URL
     $api_url = URLAPI . 'states/selected';
-    
+
 
     // Realizar petición usando cURL
     $ch = curl_init();
@@ -214,4 +221,67 @@ function get_selected_states(WP_REST_Request $request)
     $standard_response = array('data' => $states_data);
 
     return rest_ensure_response($standard_response);
+}
+
+/**
+ * Endpoint temporal para crear la tabla de leads
+ * 
+ * @param WP_REST_Request $request Objeto de solicitud REST
+ * @return WP_REST_Response Respuesta con el resultado de la creación
+ */
+function create_leads_table_endpoint(WP_REST_Request $request)
+{
+    $response = array(
+        'success' => false,
+        'message' => '',
+        'table_exists_before' => false,
+        'table_exists_after' => false
+    );
+    
+    // Use the Leads Manager to handle table creation
+    if (class_exists('Xpsocial_Leads_Manager')) {
+        $leads_manager = Xpsocial_Leads_Manager::get_instance();
+        
+        // Check if table exists before
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'xpsocial_leads';
+        
+        $is_sqlite = (class_exists('WP_SQLite_DB') && $wpdb instanceof WP_SQLite_DB) || 
+                     (isset($wpdb->dbh) && $wpdb->dbh instanceof PDO);
+        
+        if ($is_sqlite) {
+            $result = $wpdb->get_var("SELECT name FROM sqlite_master WHERE type='table' AND name='{$table_name}'");
+            $table_exists_before = ($result == $table_name);
+        } else {
+            $result = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name));
+            $table_exists_before = ($result == $table_name);
+        }
+        
+        $response['table_exists_before'] = $table_exists_before;
+        
+        if ($table_exists_before) {
+            $response['message'] = 'Table already exists';
+            $response['success'] = true;
+        } else {
+            // Force create the table
+            $success = $leads_manager->force_create_table();
+            
+            // Check if table exists after
+            if ($is_sqlite) {
+                $result = $wpdb->get_var("SELECT name FROM sqlite_master WHERE type='table' AND name='{$table_name}'");
+                $table_exists_after = ($result == $table_name);
+            } else {
+                $result = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name));
+                $table_exists_after = ($result == $table_name);
+            }
+            
+            $response['table_exists_after'] = $table_exists_after;
+            $response['success'] = $success;
+            $response['message'] = $success ? 'Table created successfully' : 'Failed to create table';
+        }
+    } else {
+        $response['message'] = 'Xpsocial_Leads_Manager class not found';
+    }
+    
+    return rest_ensure_response($response);
 }

@@ -14,4 +14,4 @@ function registrar_formulario_shortcode()
 
     return ob_get_clean();
 }
- add_shortcode('xpsocial_register_form', 'registrar_formulario_shortcode');
+ // add_shortcode('xpsocial_register_form', 'registrar_formulario_shortcode'); // Disabled - using dynamic shortcode instead

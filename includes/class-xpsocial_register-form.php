@@ -11,7 +11,7 @@ require_once plugin_dir_path(__FILE__) . 'class-xpsocial_config.php';
 require_once plugin_dir_path(__FILE__) . 'class-xpsocial_cache.php';
 require_once plugin_dir_path(__FILE__) . 'class-xpsocial_performance.php';
 // Check if the form is submitted
-if ($_SERVER[ 'REQUEST_METHOD' ] == 'POST') {
+if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST') {
     after_submission_xeerpa();
 }
 
@@ -38,19 +38,47 @@ function after_submission_xeerpa()
         $first_name = sanitize_text_field($_POST[ 'field_firstname' ]);
         $last_name = sanitize_text_field($_POST[ 'field_lastname' ]);
         $email = sanitize_email($_POST[ 'field_email' ]);
-        $genero = sanitize_text_field($_POST[ 'field_gender' ]);
+        // Map gender to full values
+        $gender_raw = sanitize_text_field($_POST[ 'field_gender' ]);
+        $genero = '';
+        switch ($gender_raw) {
+            case 'm':
+                $genero = 'Masculino';
+                break;
+            case 'f':
+                $genero = 'Femenino';
+                break;
+            case 'nb':
+                $genero = 'No Binario';
+                break;
+            default:
+                $genero = $gender_raw; // fallback to original value
+        }
+        
         $birthday = sanitize_text_field($_POST[ 'field_birthday' ]);
         $phone = sanitize_text_field($_POST[ 'field_countryPhoneCode' ]) . sanitize_text_field($_POST[ 'field_phone' ]);
         $IDCedula = sanitize_text_field($_POST[ 'field_id' ]);
-        $country = sanitize_text_field($_POST[ 'field_country' ]);
+        
+        // Get country name instead of ID
+        $country_id = sanitize_text_field($_POST[ 'field_country' ]);
+        $country = $country_id; // Will be updated with actual country name below
+        
         $provincia = sanitize_text_field($_POST[ 'field_province' ]);
         $snid = sanitize_text_field($_POST[ 'field_snid' ]);
         $sn = sanitize_text_field($_POST[ 'field_sn' ]);
         $password = isset($_POST[ 'field_password' ]) ? sanitize_text_field($_POST[ 'field_password' ]) : $it;
 
         // Prepare boolean values - check means "Sí"
-        $robinson = isset($_POST[ 'field_terms' ]) && $_POST[ 'field_terms' ] === 'si' ? 'false' : 'true';
-        $politicaprivacidad = isset($_POST[ 'field_privacy' ]) && $_POST[ 'field_privacy' ] === 'si' ? 'true' : 'false';
+        $terms_checked = isset($_POST[ 'field_terms' ]) && $_POST[ 'field_terms' ] === 'si';
+        $privacy_checked = isset($_POST[ 'field_privacy' ]) && $_POST[ 'field_privacy' ] === 'si';
+        
+        // For database storage (Sí/No)
+        $robinson_db = $terms_checked ? 'Sí' : 'No';
+        $politicaprivacidad_db = $privacy_checked ? 'Sí' : 'No';
+        
+        // For external system (true/false)
+        $robinson = $terms_checked ? 'false' : 'true';
+        $politicaprivacidad = $privacy_checked ? 'true' : 'false';
         
         // Get dynamic fields data
         $dynamic_fields_data = array();
@@ -72,10 +100,10 @@ function after_submission_xeerpa()
 
         // Get country data with caching (fast operation)
         $cache = XPSocial_Cache::get_instance();
-        $country_data = $cache->get_cached_country_data($country);
+        $country_data = $cache->get_cached_country_data($country_id);
         
         // Safely get country name with proper error checking
-        $country_name = $country; // Default to original country value
+        $country_name = $country_id; // Default to original country ID
         if (!is_wp_error($country_data) && 
             isset($country_data->data) && 
             is_array($country_data->data) && 
@@ -87,7 +115,7 @@ function after_submission_xeerpa()
             if (is_wp_error($country_data)) {
                 error_log("XPSocial: Country data error - " . $country_data->get_error_message());
             } else {
-                error_log("XPSocial: Invalid country data structure for country ID: " . $country);
+                error_log("XPSocial: Invalid country data structure for country ID: " . $country_id);
             }
         }
 
@@ -107,16 +135,16 @@ function after_submission_xeerpa()
                 'LastName' => $last_name,
                 'EmailAddress' => $email,
                 'IDNumber' => $IDCedula,
-                'Gender' => $genero,
+                'Gender' => $genero, // Now contains "Masculino", "Femenino", "No Binario"
                 'BirthDate' => $birthday,
                 'MobileNumber' => $phone,
                 'Province' => $provincia,
-                'Country' => $country,
+                'Country' => $country_name, // Now contains the actual country name
                 'UserRegisterSocial' => $sn,
                 'CaptureDate' => current_time('Y-m-d H:i:s'),
                 'ModifiedDate' => current_time('Y-m-d H:i:s'),
-                'PoliticasPrivacidad' => $politicaprivacidad === 'true' ? 'Sí' : 'No',
-                'AceptaComunicaciones' => $robinson === 'false' ? 'Sí' : 'No',
+                'PoliticasPrivacidad' => $politicaprivacidad_db, // "Sí" or "No"
+                'AceptaComunicaciones' => $robinson_db, // "Sí" or "No"
                 'snid' => $snid,
                 'it_token' => $it,
                 'id_token' => $desobfuscatedToken,
