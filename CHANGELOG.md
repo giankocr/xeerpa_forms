@@ -186,6 +186,61 @@ xpsocial_login/
 
 ---
 
+### Versión 3.1.4 - Eliminación de Funcionalidades de Login y Usuarios
+
+#### Cambios Realizados
+- **Archivos modificados**: Múltiples archivos del plugin
+- **Acción**: Eliminación completa de funcionalidades de login y gestión de usuarios
+- **Fecha**: $(date)
+
+#### Detalles de la Modificación
+1. **Archivo eliminado**:
+   - `public/add_metadata.php`: Archivo completo eliminado
+
+2. **Funciones eliminadas**:
+   - `agregar_metadato_usuario()` en `xpsocial_login.php`
+   - `set_metadata_user()` en `xpsocial_login-public.js`
+   - `update_metadata_user_token()` en `xpsocial_login-public.js`
+   - `get_metadata_user()` en `xpsocial_login-public.js`
+   - `hide_admin_bar_for_roles()` en `xpsocial_login.php`
+
+3. **Funcionalidades removidas**:
+   - **Creación de usuarios WordPress**: `wp_create_user()` eliminado
+   - **Login automático**: `wp_signon()` eliminado
+   - **Gestión de metadatos**: `update_user_meta()` y `add_user_meta()` eliminados
+   - **Gestión de roles**: Funciones de admin bar eliminadas
+   - **Endpoints REST de metadatos**: API endpoints eliminados
+
+4. **Archivos modificados**:
+   - `xpsocial_login.php`: Eliminadas funciones de metadatos y roles
+   - `includes/class-xpsocial_register-form.php`: Eliminada creación de usuarios y login
+   - `public/js/xpsocial_login-public.js`: Eliminadas funciones de metadatos
+
+#### Funcionalidades que ya NO están disponibles
+- ❌ **Creación automática de usuarios WordPress**
+- ❌ **Login automático después del registro**
+- ❌ **Gestión de metadatos de usuario**
+- ❌ **Endpoints REST para metadatos**
+- ❌ **Control de admin bar por roles**
+- ❌ **Almacenamiento de datos de usuario en WordPress**
+
+#### Funcionalidades que SÍ se mantienen
+- ✅ **Formularios de registro y login**
+- ✅ **Integración con APIs de Xeerpa**
+- ✅ **Selección de países y provincias**
+- ✅ **Validación de formularios**
+- ✅ **Redirecciones configuradas**
+- ✅ **Estilos y personalización**
+
+#### Beneficios de la Eliminación
+- **Plugin más liviano**: Menos código y dependencias
+- **Mayor simplicidad**: Enfoque solo en formularios y APIs
+- **Menos conflictos**: No interfiere con otros plugins de usuarios
+- **Mejor rendimiento**: Menos operaciones de base de datos
+- **Mantenimiento reducido**: Menos código que mantener
+
+---
+
 ## Próximas Modificaciones
 
 ### Pendientes de Definir

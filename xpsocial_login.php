@@ -90,34 +90,6 @@ function console_log($output, $with_script_tags = true)
 
 
 
-function agregar_metadato_usuario()
-{
-        // Obtener los datos POST
-        $meta_xeerpa_it = sanitize_text_field($data['meta_xeerpa_it']);
-        $meta_xeerpa_phone = sanitize_text_field($data['meta_xeerpa_phone']);
-        $meta_xeerpa_IDCedula = sanitize_text_field($data['meta_xeerpa_IDCedula']);
-        $meta_xeerpa_birthday = sanitize_text_field($data['meta_xeerpa_Birthday']);
-        $meta_xeerpa_sn = sanitize_text_field($data['meta_xeerpa_sn']);
-        $meta_xeerpa_snid = sanitize_text_field($data['meta_xeerpa_snid']);
-        // Obtener el ID del usuario actual (o puedes obtenerlo de otra manera)
-        $user_id = get_current_user_id();
-
-    if ($user_id) {
-        // Actualizar los metadatos del usuario
-        update_user_meta($user_id, 'meta_xeerpa_it', $meta_xeerpa_it);
-        update_user_meta($user_id, 'meta_xeerpa_phone', $meta_xeerpa_phone);
-        update_user_meta($user_id, 'meta_xeerpa_IDCedula', $meta_xeerpa_IDCedula);
-        update_user_meta($user_id, 'meta_xeerpa_birthday', $meta_xeerpa_birthday);
-        update_user_meta($user_id, 'meta_xeerpa_sn', $meta_xeerpa_sn);
-        update_user_meta($user_id, 'meta_xeerpa_snid', $meta_xeerpa_snid);
-
-        // Responder con un mensaje de éxito
-        wp_send_json_success('Metadatos actualizados exitosamente.');
-    } else {
-        // Responder con un error si no hay usuario
-        wp_send_json_error('No se pudo obtener el ID del usuario.');
-    }
-}
 
 
 /**
@@ -136,13 +108,6 @@ function run_xpsocial_login()
     $plugin->run();
 }
 
-function hide_admin_bar_for_roles()
-{
-    if (!current_user_can('administrator')) {
-        return false;
-    }
-    return true;
-}
-add_filter('show_admin_bar', 'hide_admin_bar_for_roles');
+// Admin bar functionality removed - no longer managing user roles
 
 run_xpsocial_login();

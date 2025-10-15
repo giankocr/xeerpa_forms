@@ -256,79 +256,8 @@ async function receiveData(data) {
  * =====  End of Xeerpa Form JS  ======
  */
 
-function set_metadata_user(data) {
-  fetch("/wp-json/geo-api/v1/login_add_metadata_user_api", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json", // Cambiar a application/json para REST API
-    },
-    body: JSON.stringify({
-      meta_xeerpa_it: data.it,
-      meta_xeerpa_phone: data.phone,
-      meta_xeerpa_IDcedula: data.IDcedula,
-      meta_xeerpa_Birthday: data.birthday,
-      meta_xeerpa_sn: data.sn,
-      meta_xeerpa_snid: data.snid,
-    }),
-  })
-    .then((response) => response.json()) // Convertir la respuesta a JSON
-    .then((data) => {
-      // Manejar la respuesta exitosa
-      console.log("Respuesta del servidor:", data);
-    })
-    .catch((error) => {
-      // Manejar errores
-      console.error("Error:", error);
-    });
-}
 
-function update_metadata_user_token(data) {
-  // Hacer una solicitud fetch
-  fetch("/wp-json/geo-api/v1/update_metadata_user", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      meta_xeerpa_field: "meta_xeerpa_it",
-      meta_xeerpa_value: data.it,
-      email: data.email,
-    }),
-  })
-    .then((response) => response.json()) // Convertir la respuesta a JSON
-    .then((data) => {
-      // Manejar la respuesta exitosa
-      console.log("Respuesta del servidor:", data);
-    })
-    .catch((error) => {
-      // Manejar errores
-      console.error("Error:", error);
-    });
-}
-
-function get_metadata_user() {
-  // Hacer una solicitud fetch
-  fetch("/wp-json/geo-api/v1/get_metadata_user", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      meta_xeerpa_field: "meta_xeerpa_it",
-      meta_xeerpa_value: data.it,
-      email: data.email,
-    }),
-  })
-    .then((response) => response.json()) // Convertir la respuesta a JSON
-    .then((data) => {
-      // Manejar la respuesta exitosa
-      console.log("Respuesta del servidor:", data);
-    })
-    .catch((error) => {
-      // Manejar errores
-      console.error("Error:", error);
-    });
-}
+// Metadata user functions removed - no longer managing user metadata
 
 function call_login_wp(data) {
   let url = "";
@@ -350,7 +279,6 @@ function call_login_wp(data) {
           URLxpSocialPluginData.redirectExistingUser
         ) {
           // Redirige al usuario a la URL proporcionada
-          //update_metadata_user_token(data);
           window.location.href = URLxpSocialPluginData.redirectExistingUser;
         } else {
           console.error(

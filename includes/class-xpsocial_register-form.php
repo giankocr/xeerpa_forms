@@ -47,13 +47,7 @@ function after_submission_xeerpa()
         $robinson = $_POST[ 'field_terms' ] ? 'false' : 'true';
         $politicaprivacidad = $_POST[ 'field_privacy' ] ? 'true' : 'false';
 
-        // Create WordPress user first (fast operation)
-        $user_id = wp_create_user($email, $password, $email);
-        
-        if (is_wp_error($user_id)) {
-            echo '<script>alert("Error creating user: ' . esc_js($user_id->get_error_message()) . '"); window.history.back();</script>';
-            return;
-        }
+        // User creation functionality removed - no longer creating WordPress users
 
         // Get country data with caching (fast operation)
         $cache = XPSocial_Cache::get_instance();
@@ -76,53 +70,7 @@ function after_submission_xeerpa()
             }
         }
 
-        // Update WordPress native user fields first (first_name and last_name)
-        wp_update_user(array(
-            'ID' => $user_id,
-            'first_name' => $first_name,
-            'last_name' => $last_name
-        ));
-
-        // Update custom user meta in batch using optimized method (fast operation)
-        $user_meta_updates = array(
-            'meta_xeerpa_phone' => $phone,
-            'meta_xeerpa_gender' => $genero,
-            'meta_xeerpa_birthday' => $birthday,
-            'meta_xeerpa_IDCedula' => $IDCedula,
-            'meta_xeerpa_country' => $country_name,
-            'meta_xeerpa_province' => $provincia,
-            'meta_xeerpa_it' => $it,
-            'meta_xeerpa_pp' => $politicaprivacidad,
-            'meta_xeerpa_tc' => $robinson,
-            'meta_xeerpa_snid' => $snid,
-            'meta_xeerpa_sn' => $sn,
-            'meta_xeerpa_idtoken' => $desobfuscatedToken,
-            'show_admin_bar_front' => false,
-            'billing_first_name' => $first_name,
-            'billing_last_name' => $last_name,
-            'billing_phone' => $phone,
-            'billing_email' => $email,
-            'shipping_first_name' => $first_name,
-            'shipping_last_name' => $last_name,
-            'shipping_phone' => $phone,
-            'shipping_email' => $email
-        );
-
-        // Batch update user meta for better performance using optimized method
-        $cache->batch_update_user_meta($user_id, $user_meta_updates);
-
-        // Log in the user immediately (fast operation)
-        $user = wp_signon(array(
-            'user_login'    => $email,
-            'user_password' => $password,
-            'remember'      => true
-        ), false);
-
-        if (is_wp_error($user)) {
-            $error_message = $user->get_error_message();
-            echo '<script>alert("Error logging in user: ' . esc_js($error_message) . '"); window.history.back();</script>';
-            return;
-        }
+        // User metadata and login functionality removed - no longer managing WordPress users
 
         // Redirect user immediately for better UX
         $xpsocial_redirect_login = get_option('xpsocial_redirect_login');
