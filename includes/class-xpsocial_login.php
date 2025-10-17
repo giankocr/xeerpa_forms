@@ -79,6 +79,7 @@ class Xpsocial_login
         $this->set_locale();
         $this->define_admin_hooks();
         $this->define_public_hooks();
+        $this->init_git_updater();
     }
 
     /**
@@ -126,6 +127,7 @@ class Xpsocial_login
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-xpsocial_register-form.php';
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-shortcode-register.php';
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-xpsocial_style.php';
+        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-xpsocial_git-updater.php';
 
         // Include opciones.php, use require_once to stop the script if opciones.php is not found
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/opciones.php';
@@ -224,5 +226,16 @@ class Xpsocial_login
     public function get_version()
     {
         return $this->version;
+    }
+
+    /**
+     * Initialize Git Updater
+     *
+     * @since     1.0.0
+     */
+    private function init_git_updater()
+    {
+        $plugin_file = plugin_basename(dirname(__FILE__) . '/../xpsocial_login.php');
+        new Xpsocial_Git_Updater(plugin_dir_path(dirname(__FILE__)) . '../' . $plugin_file);
     }
 }
