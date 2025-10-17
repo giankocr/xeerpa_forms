@@ -165,13 +165,11 @@ class Xpsocial_login_Activator
             'xpsocial_clientId' => '',
             'xpsocial_clientPwd' => '',
             'xpsocial_appId' => '',
-            'xpsocial_redirect_login' => '',
-            'xpsocial_redirect_to_registro' => '',
-            'xpsocial_redirect_existing_user' => '',
+            // Configuraciones de redirect eliminadas - ahora se configuran por formulario
             'xpsocial_marca' => '',
             'xpsocial_linkPP' => '',
             'xpsocial_linkTyC' => '',
-            'xpsocial_lost_password_url' => '',
+            // 'xpsocial_lost_password_url' => '', // eliminado - no se requiere
             'xpsocial_countries' => array(),
             'fifco_api_url' => '',
             'fifco_api_token' => '',

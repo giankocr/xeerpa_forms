@@ -221,5 +221,10 @@ class Xpsocial_login_Public
         wp_enqueue_script($this->plugin_name, plugin_dir_url(__FILE__) . 'js/xpsocial_login-public.js', array( 'jquery' ), $this->version, true);
         wp_enqueue_script($this->plugin_name . '-forms', plugin_dir_url(__FILE__) . 'js/xpsocial_forms.js', array( 'jquery' ), $this->version, true);
         wp_enqueue_script($this->plugin_name . '-validation', plugin_dir_url(__FILE__) . 'js/xpsocial_validation.js', array( 'jquery' ), $this->version, true);
+        
+        // Localizar ajaxurl para el frontend
+        wp_localize_script($this->plugin_name . '-forms', 'xpsocial_ajax', array(
+            'ajaxurl' => admin_url('admin-ajax.php')
+        ));
     }
 }

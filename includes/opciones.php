@@ -15,16 +15,8 @@ function xpsocial_enqueue_scripts()
     wp_register_script('xpsocial-options-script', '', [], '', true);
     wp_enqueue_script('xpsocial-options-script');
 
-    // Obtén las URLs de redirección
-    $redirect_url = get_option('xpsocial_redirect_login');
-    $register_url = get_option('xpsocial_redirect_to_registro');
-    $redirect_existing_user = get_option('xpsocial_redirect_existing_user');
-    // Pasa las variables a JavaScript
-    wp_localize_script('xpsocial-options-script', 'URLxpSocialPluginData', array(
-        'redirectUrl' => esc_url($redirect_url),
-        'registerUrl' => esc_url($register_url),
-        'redirectExistingUser' => esc_url($redirect_existing_user)
-    ));
+    // Configuraciones de redirección movidas a configuración por formulario
+    // Las URLs de redirect ahora se configuran individualmente en cada formulario
 
     // Opcionalmente, puedes agregar cualquier código JavaScript inline que necesites
    /* wp_add_inline_script('xpsocial-options-script', '
@@ -52,15 +44,13 @@ function xpsocial_plugin_init()
     register_setting('xpsocial-group', 'xpsocial_GFormID');
     // Google Sheets functionality removed
     register_setting('xpsocial-group', 'xpsocial_GFxeerpa');
-    register_setting('xpsocial-group', 'xpsocial_redirect_login');
-    register_setting('xpsocial-group', 'xpsocial_redirect_to_registro');
-    register_setting('xpsocial-group', 'xpsocial_redirect_existing_user');
+    // Configuraciones de redirect eliminadas - ahora se configuran por formulario
     register_setting('xpsocial-group', 'xpsocial_marca');
     register_setting('xpsocial-group', 'xpsocial_linkPP');
     register_setting('xpsocial-group', 'xpsocial_linkTyC');
     register_setting('xpsocial-group', 'xpsocial_licencia');
     register_setting('xpsocial-group', 'xpsocial_countries');
-    register_setting('xpsocial-group', 'xpsocial_lost_password_url');
+    // register_setting('xpsocial-group', 'xpsocial_lost_password_url'); // eliminado - no se requiere
     register_setting('xpsocial-group', 'fifco_api_url');
     register_setting('xpsocial-group', 'fifco_api_token');
 
@@ -688,26 +678,8 @@ function xpsocial_plugin_options()
                             <br><small>Ingrese el Xeerpa AppId, enviado por Xeerpa.</small>
                         </td>
                     </tr>
-                    <tr valign='top'>
-                        <th scope="row">
-                            <label>URL Redirect Login</label>
-                        </th>
-                        <td>
-                            <input type="url" name="xpsocial_redirect_login" size='160' id="xpsocial_redirect_login_" value='<?php echo get_option('xpsocial_redirect_login') ?>' />
-                            <br>
-                            <small>Indica aquí la url donde se utiliza el shortcode <code>[xpsocial_login_form]</code>.</small>
-                        </td>
-                    </tr>
-                    <tr valign='top'>
-                        <th scope="row">
-                            <label>URL de Registro</label>
-                        </th>
-                        <td>
-                            <input type="url" name="xpsocial_redirect_to_registro" size='160' id="xpsocial_redirect_to_registro_" value='<?php echo get_option('xpsocial_redirect_to_registro') ?>' />
-                            <br>
-                            <small> Indica aquí la url donde se utiliza el shortcode <code>[xpsocial_register_form]</code></small>
-                        </td>
-                    </tr>
+                    <!-- URL Redirect Login eliminado - ahora se configura por formulario -->
+                    <!-- URL de Registro eliminado - ahora se configura por formulario -->
                     <tr valign='top'>
                         <th scope="row">
                             <label>MARCA</label>
@@ -738,26 +710,8 @@ function xpsocial_plugin_options()
                             <small>LINK Términos y Condiciones.</small>
                         </td>
                     </tr>
-                    <tr valign='top'>
-                        <th scope="row">
-                            <label>LINK para olvidé mi contraseña</label>
-                        </th>
-                        <td>
-                            <input type="url" name="xpsocial_lost_password_url" size='160' id="xpsocial_lost_password_url" value='<?php echo get_option('xpsocial_lost_password_url') ?>' />
-                            <br>
-                            <small>Ingrese el link para cambiar contraseña. esto se mostrará en el login</small>
-                        </td>
-                    </tr>
-                    <tr valign='top'>
-                        <th scope="row">
-                            <label>URL de redirección para usuarios existentes</label>
-                        </th>
-                        <td>
-                            <input type="url" name="xpsocial_redirect_existing_user" size='160' id="xpsocial_redirect_existing_user" value='<?php echo get_option('xpsocial_redirect_existing_user') ?>' />
-                            <br>
-                            <small>Indica aquí la url donde se redirigirá al usuario después de iniciar sesión si ya existe en el sistema.</small>
-                        </td>
-                    </tr>
+                    <!-- LINK para olvidé mi contraseña eliminado - no se requiere -->
+                    <!-- URL de redirección para usuarios existentes eliminado - ahora se configura por formulario -->
                     <tr valign='top'>
                         <th scope="row">
                             <label for="xpsocial_urlSocial">Shortcode Recomendador Xeerpa</label>

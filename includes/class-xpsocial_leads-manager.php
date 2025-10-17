@@ -30,7 +30,6 @@ class Xpsocial_Leads_Manager
         
         // Only log constructor call once per session
         if (!isset($_SESSION['xpsocial_leads_manager_logged'])) {
-            error_log('XPSocial: Leads Manager constructor called, table name: ' . $this->table_name);
             $_SESSION['xpsocial_leads_manager_logged'] = true;
         }
         

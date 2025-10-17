@@ -468,6 +468,7 @@ class Xpsocial_Forms_CPT
         
         $source = get_post_meta($post->ID, '_xpsocial_source', true);
         $success_html = get_post_meta($post->ID, '_xpsocial_success_html', true);
+        $redirect_url = get_post_meta($post->ID, '_xpsocial_redirect_url', true);
         $fifco_enabled = get_post_meta($post->ID, '_xpsocial_fifco_enabled', true);
         $marca = get_post_meta($post->ID, '_xpsocial_marca', true);
         $country = get_post_meta($post->ID, '_xpsocial_country', true);
@@ -493,7 +494,14 @@ class Xpsocial_Forms_CPT
                 <th scope="row"><label for="xpsocial_success_html">Mensaje de Éxito</label></th>
                 <td>
                     <textarea id="xpsocial_success_html" name="xpsocial_success_html" rows="5" cols="50" class="large-text"><?php echo esc_textarea($success_html); ?></textarea>
-                    <p class="description">HTML que se mostrará después del registro exitoso</p>
+                    <p class="description">HTML que se mostrará después del registro exitoso (solo si no se configura redirect)</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="xpsocial_redirect_url">URL de Redirección</label></th>
+                <td>
+                    <input type="url" id="xpsocial_redirect_url" name="xpsocial_redirect_url" value="<?php echo esc_attr($redirect_url); ?>" class="regular-text" placeholder="https://ejemplo.com/gracias" />
+                    <p class="description">URL a la que redirigir después del registro exitoso. Si se deja vacío, se mostrará el mensaje de éxito HTML.</p>
                 </td>
             </tr>
             <tr>
@@ -758,6 +766,7 @@ class Xpsocial_Forms_CPT
         $fields_to_save = array(
             '_xpsocial_source',
             '_xpsocial_success_html',
+            '_xpsocial_redirect_url',
             '_xpsocial_fifco_enabled',
             '_xpsocial_marca',
             '_xpsocial_country',
@@ -903,6 +912,7 @@ class Xpsocial_Forms_CPT
         $config = array(
             'source' => $source,
             'success_html' => get_post_meta($post->ID, '_xpsocial_success_html', true),
+            'redirect_url' => get_post_meta($post->ID, '_xpsocial_redirect_url', true),
             'fifco_enabled' => get_post_meta($post->ID, '_xpsocial_fifco_enabled', true),
             'marca' => get_post_meta($post->ID, '_xpsocial_marca', true),
             'country' => get_post_meta($post->ID, '_xpsocial_country', true),

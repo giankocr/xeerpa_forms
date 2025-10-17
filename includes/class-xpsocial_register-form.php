@@ -2,21 +2,100 @@
 
 // Cargar wp-load.php desde el directorio raíz de WordPress
 if (!defined('ABSPATH')) {
-    $public_path = $_SERVER[ 'DOCUMENT_ROOT' ] . '/wp-load.php';
-    include($public_path);
+    // Intentar diferentes rutas para wp-load.php
+    $possible_paths = array(
+        $_SERVER['DOCUMENT_ROOT'] . '/wp-load.php',
+        dirname(dirname(dirname(dirname(__FILE__)))) . '/wp-load.php',
+        dirname(dirname(dirname(dirname(dirname(__FILE__))))) . '/wp-load.php'
+    );
+    
+    $wp_loaded = false;
+    foreach ($possible_paths as $path) {
+        if (file_exists($path)) {
+            require_once $path;
+            $wp_loaded = true;
+            break;
+        }
+    }
+    
+    if (!$wp_loaded) {
+        http_response_code(500);
+        echo json_encode(array('success' => false, 'message' => 'WordPress not found'));
+        exit;
+    }
+    
+    // Debug: verificar que WordPress se cargó correctamente
+    error_log('XPSocial Debug - WordPress loaded, ABSPATH: ' . (defined('ABSPATH') ? ABSPATH : 'NOT DEFINED'));
+    error_log('XPSocial Debug - wp_verify_nonce function exists: ' . (function_exists('wp_verify_nonce') ? 'YES' : 'NO'));
 }
 
 // Include configuration and optimization systems
 require_once plugin_dir_path(__FILE__) . 'class-xpsocial_config.php';
 require_once plugin_dir_path(__FILE__) . 'class-xpsocial_cache.php';
 require_once plugin_dir_path(__FILE__) . 'class-xpsocial_performance.php';
-// Check if the form is submitted
-if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'POST') {
-    after_submission_xeerpa();
-}
+// Registrar el hook de AJAX para WordPress
+add_action('wp_ajax_xpsocial_register_form', 'after_submission_xeerpa');
+add_action('wp_ajax_nopriv_xpsocial_register_form', 'after_submission_xeerpa');
 
 function after_submission_xeerpa()
 {
+    // Verificar nonce CSRF para seguridad
+    $nonce = $_POST['register_form_nonce'] ?? '';
+    
+    if (empty($nonce) || !wp_verify_nonce($nonce, 'register_form_action')) {
+        header('Content-Type: application/json');
+        http_response_code(403);
+        echo json_encode(array(
+            'success' => false,
+            'message' => 'Token de seguridad inválido. Por favor, recarga la página e intenta de nuevo.',
+            'errors' => array('security' => 'Invalid security token')
+        ));
+        exit;
+    }
+    
+    // Rate limiting básico - verificar que no se envíe demasiado rápido
+    $user_ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $rate_limit_key = 'xpsocial_rate_limit_' . md5($user_ip);
+    $last_submission = get_transient($rate_limit_key);
+    
+    if ($last_submission && (time() - $last_submission) < 30) { // 30 segundos entre envíos
+        header('Content-Type: application/json');
+        http_response_code(429);
+        echo json_encode(array(
+            'success' => false,
+            'message' => 'Por favor, espera un momento antes de enviar otro formulario.',
+            'errors' => array('rate_limit' => 'Too many requests')
+        ));
+        exit;
+    }
+    
+    // Registrar el tiempo de este envío
+    set_transient($rate_limit_key, time(), 300); // 5 minutos
+    
+    // Verificar tamaño total de la petición (protección contra ataques de tamaño)
+    $max_post_size = ini_get('post_max_size');
+    $max_upload_size = ini_get('upload_max_filesize');
+    $content_length = $_SERVER['CONTENT_LENGTH'] ?? 0;
+    
+    if ($content_length > 0) {
+        $max_bytes = min(
+            wp_convert_hr_to_bytes($max_post_size),
+            wp_convert_hr_to_bytes($max_upload_size),
+            10 * 1024 * 1024 // 10MB máximo
+        );
+        
+        if ($content_length > $max_bytes) {
+            header('Content-Type: application/json');
+            http_response_code(413);
+            echo json_encode(array(
+                'success' => false,
+                'message' => 'El tamaño de los datos enviados es demasiado grande.',
+                'errors' => array('size' => 'Request too large')
+               ));
+               exit;
+           }
+       }
+    
     $obfKey2 = '0123456789@ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_';
     $obfKey1 = '0fg14GHIJ789@ADFvwKLM2eh3NOPQz_RSYZabEcdi56jklmVWXnoTUpqBCrstuxy';
     if (isset($_POST[ 'field_email' ]) && !empty($_POST[ 'field_email' ])) {
@@ -38,6 +117,18 @@ function after_submission_xeerpa()
         $first_name = sanitize_text_field($_POST[ 'field_firstname' ]);
         $last_name = sanitize_text_field($_POST[ 'field_lastname' ]);
         $email = sanitize_email($_POST[ 'field_email' ]);
+        
+        // Validación adicional del email
+        if (!is_email($email) || empty($email)) {
+            header('Content-Type: application/json');
+            http_response_code(400);
+            echo json_encode(array(
+                'success' => false,
+                'message' => 'Email inválido.',
+                'errors' => array('field_email' => 'Email inválido')
+            ));
+            exit;
+        }
         // Map gender to full values
         $gender_raw = sanitize_text_field($_POST[ 'field_gender' ]);
         $genero = '';
@@ -205,19 +296,36 @@ function after_submission_xeerpa()
             }
         }
 
-        // Redirect user to the configured redirect URL
-        $xpsocial_redirect_login = get_option('xpsocial_redirect_login');
-        if (!empty($xpsocial_redirect_login)) {
-            // Return JSON response with redirect URL
-            header('Content-Type: application/json');
-            http_response_code(200);
-            echo json_encode(array(
-                'success' => true,
-                'message' => 'Registro completado exitosamente',
-                'redirect' => $xpsocial_redirect_login
-            ));
+        // Verificar si hay redirect configurado para este formulario específico
+        $redirect_url = '';
+        if ($form_config && !empty($form_config['redirect_url'])) {
+            $redirect_url = $form_config['redirect_url'];
+        }
+        
+        if (!empty($redirect_url)) {
+            // Validar que la URL de redirect sea segura
+            $validated_redirect_url = esc_url_raw($redirect_url);
+            if (wp_http_validate_url($validated_redirect_url)) {
+                // Return JSON response with redirect URL
+                header('Content-Type: application/json');
+                http_response_code(200);
+                echo json_encode(array(
+                    'success' => true,
+                    'message' => 'Registro completado exitosamente',
+                    'redirect' => $validated_redirect_url
+                ));
+            } else {
+                // URL inválida, usar fallback
+                header('Content-Type: application/json');
+                http_response_code(200);
+                echo json_encode(array(
+                    'success' => true,
+                    'message' => 'Registro completado exitosamente',
+                    'success_html' => '<div class="xpsocial-success-message"><h3>¡Registro exitoso!</h3><p>Gracias por registrarte. Tu información ha sido guardada correctamente.</p></div>'
+                ));
+            }
         } else {
-            // Fallback to success message if no redirect is configured
+            // No hay redirect configurado, mostrar mensaje de éxito HTML
             $success_html = '';
             if ($form_config && !empty($form_config['success_html'])) {
                 $success_html = $form_config['success_html'];

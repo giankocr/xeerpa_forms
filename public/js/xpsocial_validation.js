@@ -395,11 +395,14 @@
             
             // Use our custom form submission handler if it exists
             if (typeof handleFormSubmit === 'function') {
-                // Create a synthetic event object
+                // Create a synthetic event object with the correct form element
+                const formElement = form[0];
                 const syntheticEvent = {
-                    target: form[0],
+                    target: formElement,
                     preventDefault: function() {}
                 };
+                
+                // Call our handler directly with the form element
                 handleFormSubmit(syntheticEvent);
             } else {
                 // Fallback to default submission

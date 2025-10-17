@@ -6,17 +6,11 @@ document.addEventListener("DOMContentLoaded", function () {
         const provinceSelect = document.getElementById("field_province");
         let loginmessage = document.getElementById("login-message");
         
-        // Manejar el envío del formulario (solo si no hay validación activa)
+        // Manejar el envío del formulario directamente
         const registerForm = document.getElementById("register_form");
         if (registerForm) {
-            // Verificar si existe el sistema de validación
-            if (typeof $ !== 'undefined' && $('.xpsocial-form').length > 0) {
-                // El sistema de validación se encargará del submit
-                console.log('Sistema de validación detectado, usando validación integrada');
-            } else {
-                // Usar nuestro handler directo si no hay validación
-                registerForm.addEventListener("submit", handleFormSubmit);
-            }
+            // Usar nuestro handler directo
+            registerForm.addEventListener("submit", handleFormSubmit);
         }
 
         if (document.getElementById("field_phone")) {
@@ -281,18 +275,40 @@ window.handleFormSubmit = async function handleFormSubmit(event) {
     const submitButton = form.querySelector('input[type="submit"]');
     const originalButtonText = submitButton ? submitButton.value : 'Enviar';
     
+    // Asegurar que el nonce esté incluido
+    const nonceField = form.querySelector('input[name="register_form_nonce"]');
+    if (nonceField && !formData.has('register_form_nonce')) {
+        formData.append('register_form_nonce', nonceField.value);
+    }
+    
+    // Agregar action para AJAX de WordPress
+    formData.append('action', 'xpsocial_register_form');
+    
+    // Debug: verificar que el nonce esté incluido (temporal)
+    // console.log('FormData contents:');
+    // for (let [key, value] of formData.entries()) {
+    //     console.log(key, value);
+    // }
+    
     // Mostrar estado de carga
     if (submitButton) {
         submitButton.value = "Enviando...";
         submitButton.disabled = true;
     }
     
-    try {
-        // Enviar datos al servidor
-        const response = await fetch(form.action, {
-            method: 'POST',
-            body: formData
-        });
+        try {
+            // Usar la URL de AJAX de WordPress
+            const ajaxUrl = (typeof xpsocial_ajax !== 'undefined') ? xpsocial_ajax.ajaxurl : '/wp-admin/admin-ajax.php';
+            
+            // Enviar datos al servidor con headers de seguridad
+            const response = await fetch(ajaxUrl, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            });
         
         const result = await response.json();
         
