@@ -23,8 +23,8 @@ class Xpsocial_Git_Updater {
         $this->plugin_slug = 'xpsocial_login';
         
         // Obtener configuración desde la base de datos
-        $this->git_repo_url = get_option('xpsocial_git_repo_url', 'https://github.com/giankocr/xeerpa_forms.git');
-        $this->git_branch = get_option('xpsocial_git_branch', 'develop');
+        $this->git_repo_url = get_option('xpsocial_git_repo_url', '');
+        $this->git_branch = get_option('xpsocial_git_branch', '');
         
         $this->init_hooks();
     }

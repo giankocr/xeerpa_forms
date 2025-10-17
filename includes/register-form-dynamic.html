@@ -221,12 +221,86 @@
                         </div>
                     
                     <?php elseif ($field['type'] == 'audio'): ?>
-                        <input type="file" 
-                               id="dynamic_<?php echo esc_attr($field['name']); ?>" 
-                               name="dynamic_<?php echo esc_attr($field['name']); ?>" 
-                               accept="audio/*"
-                               <?php echo $field['required'] == '1' ? 'required' : ''; ?>>
-                        <p class="description">Formatos permitidos: MP3, WAV, OGG</p>
+                        <?php 
+                        $audio_formats = isset($field['audio_formats']) ? $field['audio_formats'] : array('mp3', 'wav', 'ogg', 'm4a');
+                        $accept_formats = array();
+                        $format_labels = array();
+                        
+                        foreach ($audio_formats as $format) {
+                            switch ($format) {
+                                case 'mp3':
+                                    $accept_formats[] = 'audio/mpeg';
+                                    $format_labels[] = 'MP3';
+                                    break;
+                                case 'wav':
+                                    $accept_formats[] = 'audio/wav';
+                                    $format_labels[] = 'WAV';
+                                    break;
+                                case 'ogg':
+                                    $accept_formats[] = 'audio/ogg';
+                                    $format_labels[] = 'OGG';
+                                    break;
+                                case 'm4a':
+                                    $accept_formats[] = 'audio/mp4';
+                                    $format_labels[] = 'M4A';
+                                    break;
+                                case 'aac':
+                                    $accept_formats[] = 'audio/aac';
+                                    $format_labels[] = 'AAC';
+                                    break;
+                                case 'webm':
+                                    $accept_formats[] = 'audio/webm';
+                                    $format_labels[] = 'WebM';
+                                    break;
+                                case 'flac':
+                                    $accept_formats[] = 'audio/flac';
+                                    $format_labels[] = 'FLAC';
+                                    break;
+                            }
+                        }
+                        ?>
+                        <div class="audio-field-container">
+                            <input type="file" 
+                                   id="dynamic_<?php echo esc_attr($field['name']); ?>" 
+                                   name="dynamic_<?php echo esc_attr($field['name']); ?>" 
+                                   accept="<?php echo esc_attr(implode(',', $accept_formats)); ?>"
+                                   <?php echo $field['required'] == '1' ? 'required' : ''; ?>
+                                   class="audio-file-input">
+                            
+                            <div class="audio-recording-controls" style="margin-top: 10px;">
+                                <button type="button" class="button button-secondary start-recording" 
+                                        data-field="<?php echo esc_attr($field['name']); ?>">
+                                    🎤 Grabar Audio
+                                </button>
+                                <button type="button" class="button button-secondary stop-recording" 
+                                        data-field="<?php echo esc_attr($field['name']); ?>" 
+                                        style="display: none;">
+                                    ⏹️ Detener
+                                </button>
+                                <button type="button" class="button button-secondary play-recording" 
+                                        data-field="<?php echo esc_attr($field['name']); ?>" 
+                                        style="display: none;">
+                                    ▶️ Reproducir
+                                </button>
+                            </div>
+                            
+                            <div class="recording-status" style="margin-top: 10px; display: none;">
+                                <div class="recording-indicator">
+                                    <span class="recording-dot"></span>
+                                    <span>Grabando...</span>
+                                </div>
+                                <div class="recording-timer">00:00</div>
+                            </div>
+                            
+                            <audio class="audio-preview" controls style="margin-top: 10px; display: none;">
+                                Tu navegador no soporta el elemento de audio.
+                            </audio>
+                            
+                            <p class="description">
+                                Formatos permitidos: <?php echo esc_html(implode(', ', $format_labels)); ?>
+                                <br>Puedes subir un archivo o grabar directamente desde tu dispositivo.
+                            </p>
+                        </div>
                     
                     <?php elseif ($field['type'] == 'image'): ?>
                         <input type="file" 

@@ -644,6 +644,33 @@ class Xpsocial_Forms_CPT
                                 <p class="description">Una opción por línea</p>
                             </td>
                                 </tr>
+                                <tr class="audio-formats-row" style="<?php echo $field['type'] !== 'audio' ? 'display: none;' : ''; ?>">
+                                    <th scope="row"><label>Formatos de Audio Permitidos</label></th>
+                                    <td>
+                                        <?php 
+                                        $audio_formats = isset($field['audio_formats']) ? $field['audio_formats'] : array('mp3', 'wav', 'ogg', 'm4a');
+                                        $available_formats = array(
+                                            'mp3' => 'MP3 (audio/mpeg)',
+                                            'wav' => 'WAV (audio/wav)', 
+                                            'ogg' => 'OGG (audio/ogg)',
+                                            'm4a' => 'M4A (audio/mp4)',
+                                            'aac' => 'AAC (audio/aac)',
+                                            'webm' => 'WebM (audio/webm)',
+                                            'flac' => 'FLAC (audio/flac)'
+                                        );
+                                        ?>
+                                        <?php foreach ($available_formats as $format => $label): ?>
+                                            <label style="display: block; margin-bottom: 5px;">
+                                                <input type="checkbox" 
+                                                       name="fields[<?php echo $index; ?>][audio_formats][]" 
+                                                       value="<?php echo esc_attr($format); ?>"
+                                                       <?php checked(in_array($format, $audio_formats)); ?> />
+                                                <?php echo esc_html($label); ?>
+                                            </label>
+                                        <?php endforeach; ?>
+                                        <p class="description">Selecciona los formatos de audio que acepta este campo. En móviles se recomienda MP3, M4A y WebM.</p>
+                                    </td>
+                                </tr>
                             </table>
                         </div>
                     <?php endforeach; ?>
@@ -705,6 +732,40 @@ class Xpsocial_Forms_CPT
                                     <p class="description">Una opción por línea</p>
                                 </td>
                             </tr>
+                            <tr class="audio-formats-row" style="display: none;">
+                                <th scope="row"><label>Formatos de Audio Permitidos</label></th>
+                                <td>
+                                    <label style="display: block; margin-bottom: 5px;">
+                                        <input type="checkbox" name="fields[${fieldIndex}][audio_formats][]" value="mp3" checked />
+                                        MP3 (audio/mpeg)
+                                    </label>
+                                    <label style="display: block; margin-bottom: 5px;">
+                                        <input type="checkbox" name="fields[${fieldIndex}][audio_formats][]" value="wav" checked />
+                                        WAV (audio/wav)
+                                    </label>
+                                    <label style="display: block; margin-bottom: 5px;">
+                                        <input type="checkbox" name="fields[${fieldIndex}][audio_formats][]" value="ogg" checked />
+                                        OGG (audio/ogg)
+                                    </label>
+                                    <label style="display: block; margin-bottom: 5px;">
+                                        <input type="checkbox" name="fields[${fieldIndex}][audio_formats][]" value="m4a" checked />
+                                        M4A (audio/mp4)
+                                    </label>
+                                    <label style="display: block; margin-bottom: 5px;">
+                                        <input type="checkbox" name="fields[${fieldIndex}][audio_formats][]" value="aac" />
+                                        AAC (audio/aac)
+                                    </label>
+                                    <label style="display: block; margin-bottom: 5px;">
+                                        <input type="checkbox" name="fields[${fieldIndex}][audio_formats][]" value="webm" />
+                                        WebM (audio/webm)
+                                    </label>
+                                    <label style="display: block; margin-bottom: 5px;">
+                                        <input type="checkbox" name="fields[${fieldIndex}][audio_formats][]" value="flac" />
+                                        FLAC (audio/flac)
+                                    </label>
+                                    <p class="description">Selecciona los formatos de audio que acepta este campo. En móviles se recomienda MP3, M4A y WebM.</p>
+                                </td>
+                            </tr>
                         </table>
                     </div>
                 `;
@@ -715,6 +776,19 @@ class Xpsocial_Forms_CPT
             
             $(document).on('click', '.remove-field', function() {
                 $(this).closest('.field-item').remove();
+            });
+            
+            // Manejar cambio de tipo de campo
+            $(document).on('change', 'select[name*="[type]"]', function() {
+                var fieldItem = $(this).closest('.field-item');
+                var audioFormatsRow = fieldItem.find('.audio-formats-row');
+                var selectedType = $(this).val();
+                
+                if (selectedType === 'audio') {
+                    audioFormatsRow.show();
+                } else {
+                    audioFormatsRow.hide();
+                }
             });
         });
         </script>
@@ -815,7 +889,7 @@ class Xpsocial_Forms_CPT
                         }
                     }
 
-                    $fields[] = array(
+                    $field_data = array(
                         'label' => sanitize_text_field($label),
                         'name' => sanitize_text_field($field['name']),
                         'type' => sanitize_text_field($field['type']),
@@ -823,6 +897,13 @@ class Xpsocial_Forms_CPT
                         'options' => in_array($field['type'], array('select','radio','checkbox'), true) ? $options_array : sanitize_textarea_field($options_raw),
                         'placeholder' => sanitize_text_field($placeholder)
                     );
+                    
+                    // Agregar formatos de audio si el campo es de tipo audio
+                    if ($field['type'] === 'audio' && isset($field['audio_formats'])) {
+                        $field_data['audio_formats'] = array_map('sanitize_text_field', $field['audio_formats']);
+                    }
+                    
+                    $fields[] = $field_data;
                 }
             }
             // Guardar como JSON string con codificación UTF-8

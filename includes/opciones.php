@@ -911,7 +911,7 @@ function xpsocial_plugin_options()
                     </th>
                     <td>
                         <input type="text" name="xpsocial_git_branch" id="xpsocial_git_branch" size='20' 
-                               value="<?php echo esc_attr(get_option('xpsocial_git_branch', 'develop')); ?>" />
+                               value="<?php echo esc_attr(get_option('xpsocial_git_branch', '')); ?>" />
                         <br><small>Nombre de la rama a monitorear (ej: main, develop, master)</small>
                     </td>
                 </tr>
@@ -923,7 +923,7 @@ function xpsocial_plugin_options()
                         <code id="git_verification_url">
                             <?php 
                             $repo_url = get_option('xpsocial_git_repo_url', 'https://github.com/giankocr/xeerpa_forms.git');
-                            $branch = get_option('xpsocial_git_branch', 'develop');
+                            $branch = get_option('xpsocial_git_branch', 'main');
                             $verification_url = str_replace('.git', '/raw/' . $branch . '/xpsocial_login.php', $repo_url);
                             echo esc_html($verification_url);
                             ?>

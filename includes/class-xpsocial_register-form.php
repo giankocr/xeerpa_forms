@@ -180,7 +180,7 @@ function after_submission_xeerpa()
                 if ($field['type'] === 'audio' || $field['type'] === 'image') {
                     // Handle file uploads
                     if (isset($_FILES[$field_name]) && $_FILES[$field_name]['error'] === UPLOAD_ERR_OK) {
-                        $uploaded_file = handle_file_upload($_FILES[$field_name], $field['type'], $field['name']);
+                        $uploaded_file = handle_file_upload($_FILES[$field_name], $field['type'], $field['name'], $field);
                         if ($uploaded_file) {
                             $dynamic_fields_data[$field['name']] = $uploaded_file;
                         }
@@ -631,7 +631,7 @@ function get_country_data($id)
  * @param string $field_name The name of the field
  * @return string|false The uploaded file URL or false on failure
  */
-function handle_file_upload($file, $field_type, $field_name) {
+function handle_file_upload($file, $field_type, $field_name, $field_config = null) {
     // Create upload directory if it doesn't exist
     $upload_dir = wp_upload_dir();
     $social_login_dir = $upload_dir['basedir'] . '/social-login';
@@ -660,7 +660,7 @@ function handle_file_upload($file, $field_type, $field_name) {
     }
     
     // Validate file type
-    $allowed_types = get_allowed_file_types($field_type);
+    $allowed_types = get_allowed_file_types($field_type, $field_config);
     $file_type = wp_check_filetype($file['name'], $allowed_types);
     
     if (!$file_type['type']) {
@@ -697,15 +697,49 @@ function handle_file_upload($file, $field_type, $field_name) {
  * @param string $field_type The type of field
  * @return array Allowed MIME types
  */
-function get_allowed_file_types($field_type) {
+function get_allowed_file_types($field_type, $field_config = null) {
     switch ($field_type) {
         case 'audio':
+            // Si hay configuración específica del campo, usar esos formatos
+            if ($field_config && isset($field_config['audio_formats'])) {
+                $allowed_formats = array();
+                foreach ($field_config['audio_formats'] as $format) {
+                    switch ($format) {
+                        case 'mp3':
+                            $allowed_formats['mp3'] = 'audio/mpeg';
+                            break;
+                        case 'wav':
+                            $allowed_formats['wav'] = 'audio/wav';
+                            break;
+                        case 'ogg':
+                            $allowed_formats['ogg'] = 'audio/ogg';
+                            break;
+                        case 'm4a':
+                            $allowed_formats['m4a'] = 'audio/mp4';
+                            break;
+                        case 'aac':
+                            $allowed_formats['aac'] = 'audio/aac';
+                            break;
+                        case 'webm':
+                            $allowed_formats['webm'] = 'audio/webm';
+                            break;
+                        case 'flac':
+                            $allowed_formats['flac'] = 'audio/flac';
+                            break;
+                    }
+                }
+                return $allowed_formats;
+            }
+            
+            // Formatos por defecto
             return array(
                 'mp3' => 'audio/mpeg',
                 'wav' => 'audio/wav',
                 'ogg' => 'audio/ogg',
                 'm4a' => 'audio/mp4',
-                'aac' => 'audio/aac'
+                'aac' => 'audio/aac',
+                'webm' => 'audio/webm',
+                'flac' => 'audio/flac'
             );
         case 'image':
             return array(
