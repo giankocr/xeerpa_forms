@@ -15,7 +15,7 @@
  * Plugin Name:       XPSocial Login
  * Plugin URI:        https://gianko.com/
  * Description:       Plugin para conectar wordpress con los api de Xeerpa Social.
- * Version: 5.1.0
+ * Version:           5.0.1
  * Author:            giankocr
  * Author URI:        https://gianko.com/
  * License:           GPL-2.0+

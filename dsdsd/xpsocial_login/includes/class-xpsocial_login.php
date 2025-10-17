@@ -71,7 +71,7 @@ class Xpsocial_login
         if (defined('XPSOCIAL_LOGIN_VERSION')) {
             $this->version = XPSOCIAL_LOGIN_VERSION;
         } else {
-            $this->version = '5.1.0';
+            $this->version = '1.0.0';
         }
         $this->plugin_name = 'xpsocial_login';
 

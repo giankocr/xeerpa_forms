@@ -38,10 +38,6 @@ function xpsocial_plugin_init()
     register_setting('xpsocial-group', 'xpsocial_urlForm');
     register_setting('xpsocial-group', 'xpsocial_authToken');
     register_setting('xpsocial-group', 'xpsocial_clientId');
-    
-    // Configuraciones para Git Updater
-    register_setting('xpsocial-group', 'xpsocial_git_repo_url');
-    register_setting('xpsocial-group', 'xpsocial_git_branch');
     register_setting('xpsocial-group', 'xpsocial_clientPwd');
     register_setting('xpsocial-group', 'xpsocial_appId');
     register_setting('xpsocial-group', 'xpsocial_Callback');
@@ -589,7 +585,6 @@ function xpsocial_plugin_options()
             <div class="tablinks " onclick="openCity(event, 'XeerpaConfig')" id="defaultOpen">Xeerpa Config</div>
             <div class="tablinks" onclick="openCity(event, 'FIFCOGCP')">FIFCO GCP</div>
             <div class="tablinks" onclick="openCity(event, 'Estilos')">Estilos</div>
-            <div class="tablinks" onclick="openCity(event, 'GitConfig')">Git Updates</div>
             <div class="tablinks" onclick="openCity(event, 'Acerca')">Acerca de</div>
         </div>
         <!--
@@ -883,80 +878,7 @@ function xpsocial_plugin_options()
         <!--  $id= $form_id.'-'.$field['id'];
                     register_setting('xpsocial-group', 'xpsocial_GF-'.$id);
     /****************************
-    *       TAB 4 - GIT CONFIG   *
-    *                           * 
-    *****************************/
--->
-        <div id="GitConfig" class="tabcontent">
-            <table class='form-table'>
-                <tr valign='top'>
-                    <td colspan="2">
-                        <h3>Configuración de Actualizaciones Git</h3>
-                        <p>Configura el repositorio Git para las actualizaciones automáticas del plugin.</p>
-                    </td>
-                </tr>
-                <tr valign='top'>
-                    <th scope="row">
-                        <label for="xpsocial_git_repo_url">URL del Repositorio Git</label>
-                    </th>
-                    <td>
-                        <input type="url" name="xpsocial_git_repo_url" id="xpsocial_git_repo_url" size='80' 
-                               value="<?php echo esc_attr(get_option('xpsocial_git_repo_url', 'https://github.com/giankocr/xeerpa_forms.git')); ?>" />
-                        <br><small>URL completa del repositorio Git (debe terminar en .git)</small>
-                    </td>
-                </tr>
-                <tr valign='top'>
-                    <th scope="row">
-                        <label for="xpsocial_git_branch">Rama del Repositorio</label>
-                    </th>
-                    <td>
-                        <input type="text" name="xpsocial_git_branch" id="xpsocial_git_branch" size='20' 
-                               value="<?php echo esc_attr(get_option('xpsocial_git_branch', 'develop')); ?>" />
-                        <br><small>Nombre de la rama a monitorear (ej: main, develop, master)</small>
-                    </td>
-                </tr>
-                <tr valign='top'>
-                    <th scope="row">
-                        <label>URL de Verificación</label>
-                    </th>
-                    <td>
-                        <code id="git_verification_url">
-                            <?php 
-                            $repo_url = get_option('xpsocial_git_repo_url', 'https://github.com/giankocr/xeerpa_forms.git');
-                            $branch = get_option('xpsocial_git_branch', 'develop');
-                            $verification_url = str_replace('.git', '/raw/' . $branch . '/xpsocial_login.php', $repo_url);
-                            echo esc_html($verification_url);
-                            ?>
-                        </code>
-                        <br><small>URL que se verifica para obtener la versión del plugin</small>
-                    </td>
-                </tr>
-                <tr valign='top'>
-                    <th scope="row">
-                        <label>Estado Actual</label>
-                    </th>
-                    <td>
-                        <p>
-                            <strong>Repositorio:</strong> <?php echo esc_html(get_option('xpsocial_git_repo_url', 'No configurado')); ?><br>
-                            <strong>Rama:</strong> <?php echo esc_html(get_option('xpsocial_git_branch', 'No configurado')); ?><br>
-                            <strong>Última verificación:</strong> 
-                            <?php 
-                            $last_check = get_transient('xpsocial_last_update_check');
-                            echo $last_check ? date('Y-m-d H:i:s', $last_check) : 'Nunca';
-                            ?>
-                        </p>
-                        <p>
-                            <a href="<?php echo admin_url('options-general.php?page=xpsocial_updates_page'); ?>" class="button button-secondary">
-                                Ir a Página de Actualizaciones
-                            </a>
-                        </p>
-                    </td>
-                </tr>
-            </table>
-        </div>
-        <!--
-    /****************************
-    *       TAB 5 - ACERCA      *
+    *       TAB 3               *
     *                           * 
     *****************************/
 -->
@@ -1150,29 +1072,6 @@ function xpsocial_plugin_options()
             
             // Re-sincronizar después de un breve delay para asegurar que todos los elementos estén cargados
             setTimeout(syncColorPickers, 500);
-            
-            // Función para actualizar URL de verificación Git
-            function updateGitVerificationUrl() {
-                var repoUrl = document.getElementById('xpsocial_git_repo_url');
-                var branch = document.getElementById('xpsocial_git_branch');
-                var verificationUrl = document.getElementById('git_verification_url');
-                
-                if (repoUrl && branch && verificationUrl) {
-                    var url = repoUrl.value.replace('.git', '/raw/' + branch.value + '/xpsocial_login.php');
-                    verificationUrl.textContent = url;
-                }
-            }
-            
-            // Agregar event listeners para actualizar URL dinámicamente
-            var repoUrlField = document.getElementById('xpsocial_git_repo_url');
-            var branchField = document.getElementById('xpsocial_git_branch');
-            
-            if (repoUrlField) {
-                repoUrlField.addEventListener('input', updateGitVerificationUrl);
-            }
-            if (branchField) {
-                branchField.addEventListener('input', updateGitVerificationUrl);
-            }
         });
         
         console.log('Created by ' + String.fromCodePoint(128568) + ' "https://gianko.com" ' + String.fromCodePoint(128561, 128640));
@@ -1311,13 +1210,13 @@ function xpsocial_updates_options() {
                 <tr>
                     <th scope="row">Repositorio Git</th>
                     <td>
-                        <code><?php echo esc_html(get_option('xpsocial_git_repo_url', 'No configurado')); ?></code>
-                        <p class="description">Configurado en la pestaña "Git Updates"</p>
+                        <code>https://github.com/giankocr/xeerpa_forms.git</code>
+                        <p class="description">Repositorio configurado en class-xpsocial_git-updater.php</p>
                     </td>
                 </tr>
                 <tr>
                     <th scope="row">Rama</th>
-                    <td><code><?php echo esc_html(get_option('xpsocial_git_branch', 'No configurado')); ?></code></td>
+                    <td><code>develop</code></td>
                 </tr>
                 <tr>
                     <th scope="row">Intervalo de Verificación</th>
@@ -1326,14 +1225,7 @@ function xpsocial_updates_options() {
                 <tr>
                     <th scope="row">URL de Verificación</th>
                     <td>
-                        <code>
-                            <?php 
-                            $repo_url = get_option('xpsocial_git_repo_url', 'https://github.com/giankocr/xeerpa_forms.git');
-                            $branch = get_option('xpsocial_git_branch', 'develop');
-                            $verification_url = str_replace('.git', '/raw/' . $branch . '/xpsocial_login.php', $repo_url);
-                            echo esc_html($verification_url);
-                            ?>
-                        </code>
+                        <code>https://github.com/giankocr/xeerpa_forms/raw/develop/xpsocial_login.php</code>
                         <p class="description">URL que se verifica para obtener la versión</p>
                     </td>
                 </tr>
@@ -1342,13 +1234,9 @@ function xpsocial_updates_options() {
         
         <div class="card">
             <h2>Configuración</h2>
-            <p>Para configurar el repositorio Git, ve a la pestaña <strong>"Git Updates"</strong> en la página principal de configuración del plugin.</p>
-            <p>Allí puedes cambiar:</p>
-            <ul>
-                <li><strong>URL del Repositorio Git:</strong> La URL completa de tu repositorio</li>
-                <li><strong>Rama del Repositorio:</strong> La rama que quieres monitorear (main, develop, etc.)</li>
-            </ul>
-            <p><a href="<?php echo admin_url('options-general.php?page=xpsocial_setting_page'); ?>" class="button button-primary">Ir a Configuración Git</a></p>
+            <p>Para configurar el repositorio Git, edita el archivo:</p>
+            <code>includes/class-xpsocial_git-updater.php</code>
+            <p>Y cambia la variable <code>$git_repo_url</code> por la URL de tu repositorio.</p>
         </div>
     </div>
     

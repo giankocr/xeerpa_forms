@@ -1,0 +1,102 @@
+/**
+ * All of the CSS for your admin-specific functionality should be
+ * included in this file.
+ */
+/* Style the tab */
+span.xp_title {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 10px;
+  padding-left: 0;
+  padding-right: 20px;
+  align-items: center;
+}
+span.xp_title h1 {
+  font-size: 3rem;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+@media(max-width:780px){
+  span.xp_title h1 {
+    font-size: 2rem;}
+}
+.tab {
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
+}
+
+/* Style the buttons inside the tab */
+.tab div {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+  font-size: 17px;
+}
+
+/* Change background color of buttons on hover */
+.tab div:hover {
+  background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+.tab div.active {
+  background-color: #ccc;
+}
+
+/* Style the tab content */
+.tabcontent {
+  display: none;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-top: none;
+}
+.defaultOpen {
+  display: block;
+}
+input#xpsocial_GFormID_xeerpa_ {
+  width: 60px;
+}
+.form_data {
+  display: flex;
+  width: 100%;
+}
+.form_data .top th {
+    width: 10%;
+}
+.form_data .top td {
+  width: 80%;
+  padding-right: 30px;
+}
+.table_fields{
+    border: 1px solid #c1c1c1;
+    display: flex;
+}
+.table_fields th{
+background-color: #c1c1c1;
+   text-align: left;
+}
+.table_fields td{
+    width: 100px;
+    border: #c1c1c1 solid 0.5px;
+}
+.table_fields td.name{
+    width: 300px;
+}
+.table_fields td.enviar{
+text-align: center;
+}
+
+table.form_data_style td {
+  display: flex;
+  flex-direction: column;
+}
+table.form_data_style tr {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}

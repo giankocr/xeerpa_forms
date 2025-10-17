@@ -1,0 +1,10 @@
+# Archivos temporales
+*.tmp
+*.log
+
+# Archivos de backup
+*.bak
+*.backup
+
+# Archivos de configuración local
+config.local.php
