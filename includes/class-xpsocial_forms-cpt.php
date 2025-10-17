@@ -951,6 +951,7 @@ function xpsocial_register_form_dynamic_shortcode($atts) {
     ob_start();
     
     // Include the dynamic form template
+    include plugin_dir_path(__FILE__) . 'social-login-btn.html';
     include plugin_dir_path(__FILE__) . 'register-form-dynamic.html';
     
     return ob_get_clean();

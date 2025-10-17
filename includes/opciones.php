@@ -489,6 +489,100 @@ function xpsocial_plugin_options()
             font-size: 28px;
             font-weight: 600;
         }
+        
+        /* Estilos para el contenedor del color picker */
+        .color-picker-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-start;
+        }
+        
+        /* Estilos para el botón transparente */
+        .transparent-btn {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            color: #6c757d;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-width: 80px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .transparent-btn:hover {
+            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+            border-color: #adb5bd;
+            color: #495057;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .transparent-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .transparent-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+        
+        .transparent-btn:hover::before {
+            left: 100%;
+        }
+        
+        /* Estilos especiales para campos transparentes */
+        .tabcontent input[type="color"].is-transparent {
+            border-color: #6c757d;
+            background: linear-gradient(45deg, #ccc 25%, transparent 25%), 
+                        linear-gradient(-45deg, #ccc 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #ccc 75%), 
+                        linear-gradient(-45deg, transparent 75%, #ccc 75%);
+            background-size: 8px 8px;
+            background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+            position: relative;
+        }
+        
+        .tabcontent input[type="color"].is-transparent::after {
+            content: 'T';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #6c757d;
+            font-size: 12px;
+            font-weight: bold;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+            pointer-events: none;
+        }
+        
+        /* Animación para el patrón de transparencia */
+        .tabcontent input[type="color"].is-transparent {
+            animation: transparentPattern 2s ease-in-out infinite;
+        }
+        
+        @keyframes transparentPattern {
+            0%, 100% { 
+                background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+            }
+            50% { 
+                background-position: 4px 4px, 4px 8px, 8px 0px, 0px 4px;
+            }
+        }
     </style>
     
     <form action="options.php" method="post">
@@ -756,19 +850,31 @@ function xpsocial_plugin_options()
                             </td>
                             <td>
                                 <label>Input Backgound-color</label>
-                                <input type="color" size='3' name="xp_bg_color" id="xp_bg_color_" value='<?php echo get_option('xp_bg_color', '#ffffff') ?>' />
+                                <div class="color-picker-container">
+                                    <input type="color" size='3' name="xp_bg_color" id="xp_bg_color_" value='<?php echo get_option('xp_bg_color', '#ffffff') ?>' />
+                                    <button type="button" class="transparent-btn" data-target="xp_bg_color_" title="Seleccionar transparente">Transparente</button>
+                                </div>
                             </td>
                             <td>
                                 <label>Login Backgound-color</label>
-                                <input type="color" size='3' name="xp_div_color" id="xp_div_color_" value='<?php echo get_option('xp_div_color', '#f8f9fa') ?>' />
+                                <div class="color-picker-container">
+                                    <input type="color" size='3' name="xp_div_color" id="xp_div_color_" value='<?php echo get_option('xp_div_color', '#f8f9fa') ?>' />
+                                    <button type="button" class="transparent-btn" data-target="xp_div_color_" title="Seleccionar transparente">Transparente</button>
+                                </div>
                             </td>
                             <td>
                                 <label>Font Color Login</label>
-                                <input type="color" size='3' name="xp_font_color" id="xp_font_color_" value='<?php echo get_option('xp_font_color', '#495057') ?>' />
+                                <div class="color-picker-container">
+                                    <input type="color" size='3' name="xp_font_color" id="xp_font_color_" value='<?php echo get_option('xp_font_color', '#495057') ?>' />
+                                    <button type="button" class="transparent-btn" data-target="xp_font_color_" title="Seleccionar transparente">Transparente</button>
+                                </div>
                             </td>
                             <td>
                                 <label>Divisor Login Color</label>
-                                <input type="color" size='3' name="xp_divisor_color" id="xp_divisor_color_" value='<?php echo get_option('xp_divisor_color', '#e9ecef') ?>' />
+                                <div class="color-picker-container">
+                                    <input type="color" size='3' name="xp_divisor_color" id="xp_divisor_color_" value='<?php echo get_option('xp_divisor_color', '#e9ecef') ?>' />
+                                    <button type="button" class="transparent-btn" data-target="xp_divisor_color_" title="Seleccionar transparente">Transparente</button>
+                                </div>
                             </td>
                         </tr>
                         <tr valign='top'>
@@ -782,11 +888,17 @@ function xpsocial_plugin_options()
                             </td>
                             <td>
                                 <label>Button Color</label>
-                                <input type="color" size='3' name="xp_btn_color" id="xp_btn_color_" value='<?php echo get_option('xp_btn_color', '#ffffff') ?>' />
+                                <div class="color-picker-container">
+                                    <input type="color" size='3' name="xp_btn_color" id="xp_btn_color_" value='<?php echo get_option('xp_btn_color', '#ffffff') ?>' />
+                                    <button type="button" class="transparent-btn" data-target="xp_btn_color_" title="Seleccionar transparente">Transparente</button>
+                                </div>
                             </td>
                             <td>
                                 <label>Button Background Color</label>
-                                <input type="color" size='3' name="xp_btn_bgcolor" id="xp_btn_bgcolor_" value='<?php echo get_option('xp_btn_bgcolor', '#007cba') ?>' />
+                                <div class="color-picker-container">
+                                    <input type="color" size='3' name="xp_btn_bgcolor" id="xp_btn_bgcolor_" value='<?php echo get_option('xp_btn_bgcolor', '#007cba') ?>' />
+                                    <button type="button" class="transparent-btn" data-target="xp_btn_bgcolor_" title="Seleccionar transparente">Transparente</button>
+                                </div>
                             </td>
                             <td>
                                 <label>Button Border Width</label>
@@ -794,7 +906,10 @@ function xpsocial_plugin_options()
                             </td>
                             <td>
                                 <label>Button Border Color</label>
-                                <input type="color" size='3' name="xp_btn_border_color" id="xp_btn_border_color_" value='<?php echo get_option('xp_btn_border_color', '#007cba') ?>' />
+                                <div class="color-picker-container">
+                                    <input type="color" size='3' name="xp_btn_border_color" id="xp_btn_border_color_" value='<?php echo get_option('xp_btn_border_color', '#007cba') ?>' />
+                                    <button type="button" class="transparent-btn" data-target="xp_btn_border_color_" title="Seleccionar transparente">Transparente</button>
+                                </div>
                             </td>
                             <td>
                                 <label>Button Border Radius</label>
@@ -854,11 +969,17 @@ function xpsocial_plugin_options()
             colorInputs.forEach(function(input) {
                 // Agregar event listener para cambios en el color
                 input.addEventListener('input', function() {
-                    // Actualizar el valor del campo
-                    this.setAttribute('value', this.value);
+                    // Si el usuario selecciona un color normal, remover la marca de transparencia
+                    if (this.getAttribute('data-transparent') === 'true') {
+                        this.removeAttribute('data-transparent');
+                        this.setAttribute('value', this.value);
+                    } else {
+                        // Actualizar el valor del campo
+                        this.setAttribute('value', this.value);
+                    }
                     
-                    // Forzar la actualización visual del campo
-                    this.style.backgroundColor = this.value;
+                    // Actualizar la visualización del color
+                    updateColorDisplay(this);
                     
                     // Agregar clase para indicar que tiene color
                     this.classList.add('has-color');
@@ -875,7 +996,12 @@ function xpsocial_plugin_options()
                 
                 // Establecer el color de fondo inicial
                 if (input.value && input.value !== '') {
-                    input.style.backgroundColor = input.value;
+                    // Verificar si el valor guardado es transparente
+                    if (input.value === 'transparent') {
+                        input.setAttribute('data-transparent', 'true');
+                        input.value = '#000000'; // Color temporal para el input
+                    }
+                    updateColorDisplay(input);
                     input.classList.add('has-color');
                 } else {
                     input.classList.remove('has-color');
@@ -892,6 +1018,84 @@ function xpsocial_plugin_options()
                     }
                 });
             });
+            
+            // Agregar event listeners para los botones de transparente
+            var transparentBtns = document.querySelectorAll('.transparent-btn');
+            transparentBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var targetId = this.getAttribute('data-target');
+                    var targetInput = document.getElementById(targetId);
+                    
+                    if (targetInput) {
+                        // Usar un color especial para representar transparencia
+                        // Usamos rgba(0,0,0,0) que es transparente pero válido para el input
+                        targetInput.value = '#000000';
+                        targetInput.setAttribute('value', 'transparent');
+                        targetInput.setAttribute('data-transparent', 'true');
+                        
+                        // Actualizar la visualización
+                        updateColorDisplay(targetInput);
+                        
+                        // Agregar clase especial para transparente
+                        targetInput.classList.add('has-color', 'is-transparent');
+                        
+                        // Efecto visual
+                        targetInput.style.transform = 'scale(1.1)';
+                        setTimeout(() => {
+                            targetInput.style.transform = '';
+                        }, 200);
+                        
+                        console.log('Color establecido como transparente:', targetInput.name);
+                    }
+                });
+            });
+        }
+        
+        // Función para actualizar la visualización del color
+        function updateColorDisplay(input) {
+            // Verificar si el campo está marcado como transparente
+            var isTransparent = input.getAttribute('data-transparent') === 'true' || 
+                               input.getAttribute('value') === 'transparent' ||
+                               input.value === 'transparent';
+            
+            if (isTransparent || input.value === '') {
+                // Mostrar patrón de transparencia
+                input.style.background = 'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)';
+                input.style.backgroundSize = '8px 8px';
+                input.style.backgroundPosition = '0 0, 0 4px, 4px -4px, -4px 0px';
+                input.style.backgroundColor = 'transparent';
+                
+                // Asegurar que tenga la clase de transparencia
+                input.classList.add('is-transparent');
+            } else {
+                // Mostrar color sólido
+                input.style.background = input.value;
+                input.style.backgroundColor = input.value;
+                
+                // Remover clase de transparencia si no es transparente
+                input.classList.remove('is-transparent');
+                input.removeAttribute('data-transparent');
+            }
+        }
+        
+        // Función para procesar valores transparentes antes de enviar el formulario
+        function processTransparentValues() {
+            var colorInputs = document.querySelectorAll('input[type="color"]');
+            colorInputs.forEach(function(input) {
+                if (input.getAttribute('data-transparent') === 'true') {
+                    // Crear un input oculto para enviar el valor transparente
+                    var hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = input.name;
+                    hiddenInput.value = 'transparent';
+                    
+                    // Insertar el input oculto antes del input de color
+                    input.parentNode.insertBefore(hiddenInput, input);
+                    
+                    // Deshabilitar el input de color para que no se envíe
+                    input.disabled = true;
+                }
+            });
         }
         
         // Activar la primera pestaña por defecto y sincronizar color pickers
@@ -904,6 +1108,12 @@ function xpsocial_plugin_options()
             
             // Sincronizar color pickers
             syncColorPickers();
+            
+            // Agregar event listener al formulario para procesar valores transparentes
+            var form = document.querySelector('form[action="options.php"]');
+            if (form) {
+                form.addEventListener('submit', processTransparentValues);
+            }
             
             // Re-sincronizar después de un breve delay para asegurar que todos los elementos estén cargados
             setTimeout(syncColorPickers, 500);

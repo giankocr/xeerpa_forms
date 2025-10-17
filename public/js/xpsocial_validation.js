@@ -390,9 +390,21 @@
                 return false;
             }
 
-            // If all validations pass, submit the form
+            // If all validations pass, submit the form using our new handler
             form.off('submit'); // Remove event handler to prevent infinite loop
-            form[0].submit(); // Submit the form
+            
+            // Use our custom form submission handler if it exists
+            if (typeof handleFormSubmit === 'function') {
+                // Create a synthetic event object
+                const syntheticEvent = {
+                    target: form[0],
+                    preventDefault: function() {}
+                };
+                handleFormSubmit(syntheticEvent);
+            } else {
+                // Fallback to default submission
+                form[0].submit();
+            }
         });
     }
 

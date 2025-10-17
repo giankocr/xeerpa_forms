@@ -643,6 +643,81 @@ span.toggle-password {
     100% { transform: translateY(-50%) rotate(360deg); }
 }
 
+/* Estilos para el contenedor de éxito */
+.xpsocial-success-container {
+    padding: 30px;
+    text-align: center;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
+    animation: fadeInSuccess 0.6s ease-in-out;
+}
+
+.xpsocial-success-content {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.xpsocial-success-content h1,
+.xpsocial-success-content h2,
+.xpsocial-success-content h3 {
+    color: #28a745;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.xpsocial-success-content p {
+    color: #495057;
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.xpsocial-success-content a {
+    color: #007cba;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.xpsocial-success-content a:hover {
+    text-decoration: underline;
+}
+
+/* Animación de entrada para el mensaje de éxito */
+@keyframes fadeInSuccess {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Estilos para el contenedor del formulario */
+.xpsocial-form-container {
+    transition: all 0.5s ease-in-out;
+}
+
+.xpsocial-form-container.hidden {
+    opacity: 0;
+    transform: translateY(-20px);
+    pointer-events: none;
+}
+
+/* Estilos para ocultar los botones de login social */
+.socials.login-social {
+    transition: all 0.5s ease-in-out;
+}
+
+.socials.login-social.hidden {
+    opacity: 0;
+    transform: translateY(-20px);
+    pointer-events: none;
+}
+
 /* Responsive */
 @media screen and (max-width: 768px) {
     .xpsocial-form .two-columns {
@@ -657,5 +732,20 @@ span.toggle-password {
     
     .xpsocial-form .phone_field .select-container span:first-child {
         flex: 1;
+    }
+    
+    .xpsocial-success-container {
+        padding: 20px;
+        margin: 15px 0;
+    }
+    
+    .xpsocial-success-content h1,
+    .xpsocial-success-content h2,
+    .xpsocial-success-content h3 {
+        font-size: 24px;
+    }
+    
+    .xpsocial-success-content p {
+        font-size: 14px;
     }
 }

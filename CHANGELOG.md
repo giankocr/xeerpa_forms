@@ -3191,4 +3191,151 @@ $('[name="field_email"]').on('blur input', function() {
   • Birth Date: Debes ser mayor de 18 años para registrarte
   ```
 
+## [3.1.35] - 2025-10-15
+
+### Sistema de Subida de Archivos para Campos Dinámicos
+- **Subida de archivos**: Los campos de tipo `audio` e `image` ahora guardan archivos en `uploads/social-login/`
+- **Organización por tipo**: Archivos organizados en subcarpetas `/audios`, `/imagenes`, `/documentos`
+- **Validación de tipos**: Solo permite tipos de archivo seguros según el tipo de campo
+- **Nombres únicos**: Genera nombres únicos para evitar conflictos
+- **URLs de acceso**: Retorna URLs públicas para acceder a los archivos subidos
+
+#### Funcionalidades Implementadas
+
+##### **1. ✅ Procesamiento de Archivos**:
+```php
+if ($field['type'] === 'audio' || $field['type'] === 'image') {
+    // Handle file uploads
+    if (isset($_FILES[$field_name]) && $_FILES[$field_name]['error'] === UPLOAD_ERR_OK) {
+        $uploaded_file = handle_file_upload($_FILES[$field_name], $field['type'], $field['name']);
+        if ($uploaded_file) {
+            $dynamic_fields_data[$field['name']] = $uploaded_file;
+        }
+    }
+}
+```
+
+##### **2. ✅ Estructura de Directorios**:
+```
+uploads/
+└── social-login/
+    ├── audios/          # Archivos de audio (mp3, wav, ogg, m4a, aac)
+    ├── imagenes/        # Archivos de imagen (jpg, png, gif, webp, svg)
+    └── documentos/      # Documentos (pdf, doc, docx, txt, rtf)
+```
+
+##### **3. ✅ Validación de Tipos de Archivo**:
+```php
+function get_allowed_file_types($field_type) {
+    switch ($field_type) {
+        case 'audio':
+            return array(
+                'mp3' => 'audio/mpeg',
+                'wav' => 'audio/wav',
+                'ogg' => 'audio/ogg',
+                'm4a' => 'audio/mp4',
+                'aac' => 'audio/aac'
+            );
+        case 'image':
+            return array(
+                'jpg' => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'gif' => 'image/gif',
+                'webp' => 'image/webp',
+                'svg' => 'image/svg+xml'
+            );
+        default: // documents
+            return array(
+                'pdf' => 'application/pdf',
+                'doc' => 'application/msword',
+                'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'txt' => 'text/plain',
+                'rtf' => 'application/rtf'
+            );
+    }
+}
+```
+
+##### **4. ✅ Generación de Nombres Únicos**:
+```php
+// Generate unique filename
+$filename = sanitize_file_name($file['name']);
+$filename = pathinfo($filename, PATHINFO_FILENAME);
+$extension = $file_type['ext'];
+$unique_filename = $filename . '_' . time() . '_' . wp_generate_password(8, false) . '.' . $extension;
+```
+
+##### **5. ✅ Formulario con Soporte de Archivos**:
+```html
+<form method="POST" enctype="multipart/form-data"
+    action="<?php echo esc_url(get_site_url() . '/wp-content/plugins/xpsocial_login/includes/class-xpsocial_register-form.php'); ?>"
+    id="register_form" class="register_form" validate>
+```
+
+#### Flujo de Subida de Archivos
+
+1. **✅ Usuario selecciona archivo**: Campo de tipo `audio` o `image` en el formulario
+2. **✅ Validación de tipo**: Se verifica que el archivo sea del tipo permitido
+3. **✅ Creación de directorios**: Se crean las carpetas necesarias si no existen
+4. **✅ Generación de nombre único**: Se crea un nombre único para evitar conflictos
+5. **✅ Subida del archivo**: Se mueve el archivo a la ubicación final
+6. **✅ Generación de URL**: Se crea la URL pública para acceder al archivo
+7. **✅ Almacenamiento en BD**: Se guarda la URL en la base de datos
+
+#### Tipos de Archivo Soportados
+
+| Tipo | Extensiones | MIME Types |
+|------|-------------|------------|
+| **Audio** | mp3, wav, ogg, m4a, aac | audio/mpeg, audio/wav, audio/ogg, audio/mp4, audio/aac |
+| **Imagen** | jpg, jpeg, png, gif, webp, svg | image/jpeg, image/png, image/gif, image/webp, image/svg+xml |
+| **Documento** | pdf, doc, docx, txt, rtf | application/pdf, application/msword, text/plain, application/rtf |
+
+#### Ejemplo de Uso
+
+##### **Campo de Audio en CPT**:
+```json
+{
+    "label": "Grabación de Voz",
+    "name": "audio_grabacion",
+    "type": "audio",
+    "required": "1"
+}
+```
+
+##### **Resultado en Base de Datos**:
+```json
+{
+    "audio_grabacion": "https://example.com/wp-content/uploads/social-login/audios/grabacion_1734567890_aB3dEfGh.mp3"
+}
+```
+
+#### Beneficios de la Implementación
+
+1. **✅ Organización clara**: Archivos separados por tipo en subcarpetas
+2. **✅ Seguridad**: Solo tipos de archivo permitidos y validados
+3. **✅ Nombres únicos**: Evita conflictos y sobrescritura de archivos
+4. **✅ URLs públicas**: Acceso directo a los archivos subidos
+5. **✅ Logging**: Registro de subidas exitosas y errores
+6. **✅ Compatibilidad**: Funciona con la estructura existente de campos dinámicos
+
+#### Casos de Uso
+
+##### **Caso 1: Subida de Audio**
+- Usuario graba un mensaje de voz
+- Se valida que sea formato de audio permitido
+- Se guarda en `uploads/social-login/audios/`
+- URL se almacena en la base de datos
+
+##### **Caso 2: Subida de Imagen**
+- Usuario sube una foto de perfil
+- Se valida que sea formato de imagen permitido
+- Se guarda en `uploads/social-login/imagenes/`
+- URL se almacena en la base de datos
+
+##### **Caso 3: Archivo No Válido**
+- Usuario intenta subir archivo no permitido
+- Se registra error en log
+- Se retorna `false` y no se procesa el archivo
+
 *Última actualización: $(date)*

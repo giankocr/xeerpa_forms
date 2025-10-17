@@ -5,11 +5,21 @@
      data-validate-id-number="<?php echo esc_attr($form_config['validate_id_number'] ? '1' : '0'); ?>"
      data-validate-age="<?php echo esc_attr($form_config['validate_age'] ? '1' : '0'); ?>"
      data-min-age="<?php echo esc_attr($form_config['min_age'] ?: '18'); ?>">
-    <div class="socials register-social">
+    
+    <!-- Contenedor para el mensaje de éxito (solo se usa si no hay redirect configurado) -->
+    <div id="xpsocial-success-container" class="xpsocial-success-container" style="display: none;">
+        <div class="xpsocial-success-content">
+            <!-- El contenido se cargará dinámicamente desde xpsocial_success_html -->
+        </div>
     </div>
-    <form method="POST"
+    
+    <!-- Contenedor del formulario -->
+    <div id="xpsocial-form-container" class="xpsocial-form-container">
+        <div class="socials register-social">
+        </div>
+    <form method="POST" enctype="multipart/form-data"
         action="<?php echo esc_url(get_site_url() . '/wp-content/plugins/xpsocial_login/includes/class-xpsocial_register-form.php'); ?>"
-        enctype="multipart/form-data" id="register_form" class="register_form" validate>
+        id="register_form" class="register_form" validate>
     <?php wp_nonce_field('register_form_action', 'register_form_nonce'); ?>
     <input type="hidden" name="form_source" value="<?php echo esc_attr($form_config['source']); ?>">
     <div>
@@ -37,7 +47,7 @@
         </div>
         <div>
             <label for="field_email">Correo electrónico</label>
-            <input name="field_email" id="field_email" type="email" value="" 
+            <input name="field_email" id="field_email" type="email" value="" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" 
             title="Formato de correo electrónico inválido.">
         </div>
         <div class="two-columns columns-wrap">
@@ -67,17 +77,17 @@
                                 title="Seleccione el código de país.">
                             <option value="" disabled selected class="placeholder">Código</option>
                         </select>
-                        <input name="field_phone" id="field_phone" type="tel" value="" required autocomplete="off" 
-                               placeholder="Número de teléfono" 
-                               title="Ingrese su número de teléfono.">
+                        <input name="field_phone" id="field_phone" type="tel" maxlength="8" minlength="8" value=""
+                        required autocomplete="off" pattern="[0-9]{8,8}" 
+                        title="Ingrese su número de teléfono. Debe tener 8 dígitos.">
                     </span>
                 </div>
             </div>
             <div>
                 <label for="field_id">Número de cédula / Identificación</label>
-                <input name="field_id" id="field_id" type="text" value="" required autocomplete="off" 
-                       placeholder="Número de cédula" 
-                       title="Ingrese su número de cédula o identificación.">
+                <input name="field_id" id="field_id" type="tel" value="" maxlength="15" minlength="9" required autocomplete="off" 
+                pattern="[0-9]{9,15}" 
+                title="Ingrese su número de cédula o identificación. Debe tener entre 9 y 15 dígitos.">
             </div>
         </div>
         <div class="two-columns">
@@ -263,4 +273,5 @@
             <input type="submit" id="xp-registro-social" class="xp-boton-registro xp_button" value="Registrarme">
         </div>
     </form>
+    </div> <!-- Cierre del contenedor del formulario -->
 </div>

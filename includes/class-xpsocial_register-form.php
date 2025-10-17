@@ -85,7 +85,16 @@ function after_submission_xeerpa()
         if ($form_config && !empty($form_config['dynamic_fields'])) {
             foreach ($form_config['dynamic_fields'] as $field) {
                 $field_name = 'dynamic_' . $field['name'];
-                if (isset($_POST[$field_name])) {
+                
+                if ($field['type'] === 'audio' || $field['type'] === 'image') {
+                    // Handle file uploads
+                    if (isset($_FILES[$field_name]) && $_FILES[$field_name]['error'] === UPLOAD_ERR_OK) {
+                        $uploaded_file = handle_file_upload($_FILES[$field_name], $field['type'], $field['name']);
+                        if ($uploaded_file) {
+                            $dynamic_fields_data[$field['name']] = $uploaded_file;
+                        }
+                    }
+                } elseif (isset($_POST[$field_name])) {
                     if ($field['type'] === 'checkbox') {
                         // For checkboxes, we get an array
                         $values = is_array($_POST[$field_name]) ? $_POST[$field_name] : array($_POST[$field_name]);
@@ -130,11 +139,7 @@ function after_submission_xeerpa()
 
         // User metadata and login functionality removed - no longer managing WordPress users
 
-        // Redirect user immediately for better UX
-        $xpsocial_redirect_login = get_option('xpsocial_redirect_login');
-        echo '<script> window.location.href = "' . esc_url($xpsocial_redirect_login) . '";</script>';
-
-        // Save lead to database using the leads manager
+        // Save lead to database using the leads manager FIRST
         if (class_exists('Xpsocial_Leads_Manager')) {
             $leads_manager = Xpsocial_Leads_Manager::get_instance();
             
@@ -200,29 +205,36 @@ function after_submission_xeerpa()
             }
         }
 
-        // Start background API calls asynchronously (non-blocking)
-        wp_schedule_single_event(time(), 'process_background_api_calls', array(
-            'user_id' => 0, // No user ID since we're not creating WordPress users
-            'user_data' => array(
-                'email' => $email,
-                'first_name' => $first_name,
-                'last_name' => $last_name,
-                'birthday' => $birthday,
-                'phone' => $phone,
-                'genero' => $genero,
-                'IDCedula' => $IDCedula,
-                'provincia' => $provincia,
-                'country' => $country,
-                'robinson' => $robinson,
-                'politicaprivacidad' => $politicaprivacidad,
-                'sn' => $sn,
-                'it' => $it,
-                'snid' => $snid,
-                'form_config' => $form_config,
-                'form_source' => $form_source,
-                'dynamic_fields' => $dynamic_fields_data
-            )
-        ));
+        // Redirect user to the configured redirect URL
+        $xpsocial_redirect_login = get_option('xpsocial_redirect_login');
+        if (!empty($xpsocial_redirect_login)) {
+            // Return JSON response with redirect URL
+            header('Content-Type: application/json');
+            http_response_code(200);
+            echo json_encode(array(
+                'success' => true,
+                'message' => 'Registro completado exitosamente',
+                'redirect' => $xpsocial_redirect_login
+            ));
+        } else {
+            // Fallback to success message if no redirect is configured
+            $success_html = '';
+            if ($form_config && !empty($form_config['success_html'])) {
+                $success_html = $form_config['success_html'];
+            } else {
+                $success_html = '<div class="xpsocial-success-message"><h3>¡Registro exitoso!</h3><p>Gracias por registrarte. Tu información ha sido guardada correctamente.</p></div>';
+            }
+            
+            header('Content-Type: application/json');
+            http_response_code(200);
+            echo json_encode(array(
+                'success' => true,
+                'message' => 'Registro completado exitosamente',
+                'success_html' => $success_html
+            ));
+        }
+        exit;
+
     }
 }
 
@@ -230,11 +242,6 @@ function after_submission_xeerpa()
 function process_background_api_calls($user_id, $user_data) {
     try {
         // Update WordPress native user fields if not already updated
-       wp_update_user(array(
-            'ID' => $user_id,
-            'first_name' => $user_data['first_name'],
-            'last_name' => $user_data['last_name']
-        ));
 
         // Prepare data for API calls
         $fecha_datetime = new DateTime($user_data['birthday']);
@@ -271,7 +278,8 @@ function process_background_api_calls($user_id, $user_data) {
                      '&idcrm=' . $user_data['email'];
 
             $urlSavedata = get_site_url() . '/wp-content/plugins/xpsocial_login/public/socialLoginSaveData.php?' . $params;
-            
+            var_dump($urlSavedata);
+            exit;
             wp_remote_get($urlSavedata, XPSocial_Performance::get_optimized_request_args(array(
                 'method' => 'GET',
                 'blocking' => false, // Make it non-blocking
@@ -505,4 +513,108 @@ function get_country_data($id)
     }
 
     return rest_ensure_response($data);
+}
+
+/**
+ * Handle file upload for dynamic fields
+ * 
+ * @param array $file The $_FILES array element
+ * @param string $field_type The type of field (audio, image, document)
+ * @param string $field_name The name of the field
+ * @return string|false The uploaded file URL or false on failure
+ */
+function handle_file_upload($file, $field_type, $field_name) {
+    // Create upload directory if it doesn't exist
+    $upload_dir = wp_upload_dir();
+    $social_login_dir = $upload_dir['basedir'] . '/social-login';
+    
+    if (!file_exists($social_login_dir)) {
+        wp_mkdir_p($social_login_dir);
+    }
+    
+    // Create subdirectories based on file type
+    $subdir = '';
+    switch ($field_type) {
+        case 'audio':
+            $subdir = '/audios';
+            break;
+        case 'image':
+            $subdir = '/imagenes';
+            break;
+        default:
+            $subdir = '/documentos';
+            break;
+    }
+    
+    $type_dir = $social_login_dir . $subdir;
+    if (!file_exists($type_dir)) {
+        wp_mkdir_p($type_dir);
+    }
+    
+    // Validate file type
+    $allowed_types = get_allowed_file_types($field_type);
+    $file_type = wp_check_filetype($file['name'], $allowed_types);
+    
+    if (!$file_type['type']) {
+        error_log('XPSocial: Invalid file type for ' . $field_name . ': ' . $file['name']);
+        return false;
+    }
+    
+    // Generate unique filename
+    $filename = sanitize_file_name($file['name']);
+    $filename = pathinfo($filename, PATHINFO_FILENAME);
+    $extension = $file_type['ext'];
+    $unique_filename = $filename . '_' . time() . '_' . wp_generate_password(8, false) . '.' . $extension;
+    
+    $file_path = $type_dir . '/' . $unique_filename;
+    
+    // Move uploaded file
+    if (move_uploaded_file($file['tmp_name'], $file_path)) {
+        // Generate URL
+        $file_url = $upload_dir['baseurl'] . '/social-login' . $subdir . '/' . $unique_filename;
+        
+        // Log successful upload
+        error_log('XPSocial: File uploaded successfully - ' . $field_name . ': ' . $file_url);
+        
+        return $file_url;
+    } else {
+        error_log('XPSocial: Failed to move uploaded file for ' . $field_name);
+        return false;
+    }
+}
+
+/**
+ * Get allowed file types for different field types
+ * 
+ * @param string $field_type The type of field
+ * @return array Allowed MIME types
+ */
+function get_allowed_file_types($field_type) {
+    switch ($field_type) {
+        case 'audio':
+            return array(
+                'mp3' => 'audio/mpeg',
+                'wav' => 'audio/wav',
+                'ogg' => 'audio/ogg',
+                'm4a' => 'audio/mp4',
+                'aac' => 'audio/aac'
+            );
+        case 'image':
+            return array(
+                'jpg' => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'gif' => 'image/gif',
+                'webp' => 'image/webp',
+                'svg' => 'image/svg+xml'
+            );
+        default: // documents
+            return array(
+                'pdf' => 'application/pdf',
+                'doc' => 'application/msword',
+                'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'txt' => 'text/plain',
+                'rtf' => 'application/rtf'
+            );
+    }
 }
