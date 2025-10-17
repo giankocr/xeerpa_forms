@@ -17,14 +17,12 @@ class Xpsocial_Git_Updater {
     private $plugin_slug;
     private $git_repo_url;
     private $git_branch;
-    private $update_check_interval;
     
     public function __construct($plugin_file) {
         $this->plugin_file = $plugin_file;
         $this->plugin_slug = 'xpsocial_login';
-        $this->git_repo_url = 'https://github.com/tu-usuario/xpsocial_login.git'; // CAMBIAR POR TU REPOSITORIO REAL
-        $this->git_branch = 'main';
-        $this->update_check_interval = 12 * HOUR_IN_SECONDS; // No se usa - solo verificación manual
+        $this->git_repo_url = 'https://github.com/giankocr/xeerpa_forms.git'; // CAMBIAR POR TU REPOSITORIO REAL
+        $this->git_branch = 'develop';
         
         $this->init_hooks();
     }
