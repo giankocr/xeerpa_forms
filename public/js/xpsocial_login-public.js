@@ -208,8 +208,9 @@ async function receiveData(data) {
     data = await JSON.parse(data);
 
     // Fill form in -- Rellena el formulario.
+    let birthday = ""; // Initialize birthday variable
     if (data.user.info.birthday) {
-      var birthday =
+      birthday =
         data.user.info.birthday.year +
         "/" +
         data.user.info.birthday.month +
@@ -231,7 +232,10 @@ async function receiveData(data) {
         document.getElementById("field_firstname").value = firstname;
         document.getElementById("field_lastname").value = lastname;
         document.getElementById("field_email").value = email;
-        document.getElementById("field_birthday").value = birthday;
+        // Only set birthday if it has a value
+        if (birthday && document.getElementById("field_birthday")) {
+          document.getElementById("field_birthday").value = birthday;
+        }
         document.getElementById("field_idcrm").value = email;
         document.getElementById("field_it").value = it;
         document.getElementById("field_snid").value = snid;
@@ -256,89 +260,6 @@ async function receiveData(data) {
  * =====  End of Xeerpa Form JS  ======
  */
 
-
-// Metadata user functions removed - no longer managing user metadata
-
-function call_login_wp(data) {
-  let url = "";
-  let bodyRequest = "";
-  url = "/wp-json/token-login/v1/login";
-  bodyRequest = { email: data.email, it: data.it };
-
-  fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(bodyRequest),
-  })
-    .then((response) => {
-      if (response.ok) {
-        if (
-          typeof URLxpSocialPluginData !== "undefined" &&
-          URLxpSocialPluginData.redirectExistingUser
-        ) {
-          // Redirige al usuario a la URL proporcionada
-          window.location.href = URLxpSocialPluginData.redirectExistingUser;
-        } else {
-          console.error(
-            "URL de redirección luego del login no está definida o es inválida."
-          );
-        }
-      } else {
-        return response.json().then((data) => {
-          throw new Error(data.message || "Error desconocido");
-        });
-      }
-    })
-    .catch((error) => {
-      // se envia al formulario de registro
-      if (
-        typeof URLxpSocialPluginData !== "undefined" &&
-        URLxpSocialPluginData.registerUrl
-      ) {
-        // Redirige al usuario a la URL proporcionada
-        if (data.sn === "TT") {
-          window.location.href =
-            URLxpSocialPluginData.registerUrl +
-            "?sn=TT&snid=" +
-            data.snid +
-            "&it=" +
-            data.it +
-            "&nickname=" +
-            data.nickname;
-        } else {
-          window.location.href =
-            URLxpSocialPluginData.registerUrl +
-            "?firstname=" +
-            data.firstname +
-            "&lastname=" +
-            data.lastname +
-            "&sn=" +
-            data.sn +
-            "&email=" +
-            data.email +
-            "&birthday=" +
-            data.birthday +
-            "&idcrm=" +
-            data.idcrm +
-            "&snid=" +
-            data.snid +
-            "&it=" +
-            data.it +
-            "&nickname=" +
-            data.nickname;
-        }
-      } else {
-        alert(
-          "URL de redirección al formulario de registro no está definida o es inválida."
-        );
-        console.error(
-          "URL de redirección al formulario de registro no está definida o es inválida."
-        );
-      }
-    });
-}
 
 /*
  * ================Recomendador===================
