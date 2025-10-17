@@ -29,6 +29,7 @@ add_action('wp_enqueue_scripts', 'xpsocial_enqueue_scripts');
 function xpsocial_admin_menu()
 {
     add_options_page('XpSocial Configuracion', 'Social Login Config', 'manage_options', 'xpsocial_setting_page', 'xpsocial_plugin_options');
+    add_options_page('XpSocial Actualizaciones', 'Social Login Updates', 'manage_options', 'xpsocial_updates_page', 'xpsocial_updates_options');
 }
 
 function xpsocial_plugin_init()
@@ -1110,4 +1111,123 @@ function allcountries()
     $countries = json_decode($response, true);
 
     return $countries;
+}
+
+/**
+ * Página de administración para actualizaciones
+ */
+function xpsocial_updates_options() {
+    // Verificar permisos
+    if (!current_user_can('manage_options')) {
+        wp_die('No tienes permisos para acceder a esta página.');
+    }
+    
+    // Obtener instancia del updater
+    $plugin_file = plugin_basename(dirname(__FILE__) . '/../xpsocial_login.php');
+    $updater = new Xpsocial_Git_Updater(plugin_dir_path(dirname(__FILE__)) . '../' . $plugin_file);
+    $update_status = $updater->get_update_status();
+    
+    // Procesar acciones AJAX
+    if (isset($_POST['action'])) {
+        if ($_POST['action'] === 'check_updates' && wp_verify_nonce($_POST['nonce'], 'xpsocial_update_nonce')) {
+            delete_transient('xpsocial_last_update_check');
+            $updater->perform_update_check();
+            $update_status = $updater->get_update_status();
+            echo '<div class="notice notice-success"><p>Verificación de actualizaciones completada.</p></div>';
+        }
+    }
+    
+    ?>
+    <div class="wrap">
+        <h1>XpSocial Login - Actualizaciones</h1>
+        
+        <div class="card">
+            <h2>Estado de Actualizaciones</h2>
+            <table class="form-table">
+                <tr>
+                    <th scope="row">Versión Actual</th>
+                    <td><strong><?php echo esc_html($update_status['current_version']); ?></strong></td>
+                </tr>
+                <tr>
+                    <th scope="row">Actualización Disponible</th>
+                    <td>
+                        <?php if ($update_status['update_available']): ?>
+                            <span style="color: #d63638;">Sí - Versión <?php echo esc_html($update_status['new_version']); ?></span>
+                        <?php else: ?>
+                            <span style="color: #00a32a;">No - El plugin está actualizado</span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">Última Verificación</th>
+                    <td><?php echo esc_html($update_status['last_check']); ?></td>
+                </tr>
+                <tr>
+                    <th scope="row">Tipo de Verificación</th>
+                    <td><?php echo esc_html($update_status['next_check']); ?></td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="card">
+            <h2>Acciones</h2>
+            <form method="post" action="">
+                <?php wp_nonce_field('xpsocial_update_nonce', 'nonce'); ?>
+                <input type="hidden" name="action" value="check_updates">
+                <p>
+                    <input type="submit" class="button button-primary" value="Verificar Actualizaciones Ahora">
+                    <span class="description">Fuerza una verificación inmediata de actualizaciones disponibles.</span>
+                </p>
+            </form>
+            
+            <?php if ($update_status['update_available']): ?>
+                <div class="notice notice-warning">
+                    <p><strong>Actualización disponible:</strong> Hay una nueva versión (<?php echo esc_html($update_status['new_version']); ?>) disponible. 
+                    Ve a <a href="<?php echo admin_url('plugins.php'); ?>">Plugins</a> para actualizar.</p>
+                </div>
+            <?php endif; ?>
+        </div>
+        
+        <div class="card">
+            <h2>Información del Sistema</h2>
+            <table class="form-table">
+                <tr>
+                    <th scope="row">Repositorio Git</th>
+                    <td>
+                        <code>https://github.com/tu-usuario/xpsocial_login.git</code>
+                        <p class="description">Cambia esta URL en el archivo class-xpsocial_git-updater.php</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">Rama</th>
+                    <td><code>main</code></td>
+                </tr>
+                <tr>
+                    <th scope="row">Intervalo de Verificación</th>
+                    <td>Manual únicamente</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="card">
+            <h2>Configuración</h2>
+            <p>Para configurar el repositorio Git, edita el archivo:</p>
+            <code>includes/class-xpsocial_git-updater.php</code>
+            <p>Y cambia la variable <code>$git_repo_url</code> por la URL de tu repositorio.</p>
+        </div>
+    </div>
+    
+    <style>
+    .card {
+        background: #fff;
+        border: 1px solid #c3c4c7;
+        border-radius: 4px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+    .card h2 {
+        margin-top: 0;
+    }
+    </style>
+    <?php
 }
