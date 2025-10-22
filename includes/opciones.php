@@ -38,6 +38,7 @@ function xpsocial_plugin_init()
     register_setting('xpsocial-group', 'xpsocial_urlForm');
     register_setting('xpsocial-group', 'xpsocial_authToken');
     register_setting('xpsocial-group', 'xpsocial_clientId');
+    
     register_setting('xpsocial-group', 'xpsocial_clientPwd');
     register_setting('xpsocial-group', 'xpsocial_appId');
     register_setting('xpsocial-group', 'xpsocial_Callback');
@@ -875,10 +876,9 @@ function xpsocial_plugin_options()
                 </article>
             </section>
         </div>
-        <!--  $id= $form_id.'-'.$field['id'];
-                    register_setting('xpsocial-group', 'xpsocial_GF-'.$id);
+        <!--
     /****************************
-    *       TAB 3               *
+    *       TAB 4 - ACERCA      *
     *                           * 
     *****************************/
 -->
@@ -1072,6 +1072,7 @@ function xpsocial_plugin_options()
             
             // Re-sincronizar después de un breve delay para asegurar que todos los elementos estén cargados
             setTimeout(syncColorPickers, 500);
+            
         });
         
         console.log('Created by ' + String.fromCodePoint(128568) + ' "https://gianko.com" ' + String.fromCodePoint(128561, 128640));
@@ -1113,6 +1114,7 @@ function allcountries()
     return $countries;
 }
 
+<<<<<<< HEAD
 /**
  * Página de administración para actualizaciones
  */
@@ -1231,3 +1233,5 @@ function xpsocial_updates_options() {
     </style>
     <?php
 }
+=======
+>>>>>>> b298d82 (audios funcionan)

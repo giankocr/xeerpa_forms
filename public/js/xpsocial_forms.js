@@ -7,11 +7,8 @@ document.addEventListener("DOMContentLoaded", function () {
         let loginmessage = document.getElementById("login-message");
         
         // Manejar el envío del formulario directamente
-        const registerForm = document.getElementById("register_form");
-        if (registerForm) {
-            // Usar nuestro handler directo
-            registerForm.addEventListener("submit", handleFormSubmit);
-        }
+        // El event listener se maneja desde xpsocial_validation.js
+        // No necesitamos agregar otro aquí para evitar duplicación
 
         if (document.getElementById("field_phone")) {
             document
@@ -255,9 +252,22 @@ async function callApi(url, method = "GET", headers = {}, body = null)
 //     .then((data) => console.log("Datos recibidos:", data))
 //     .catch((error) => console.error("Error:", error));
 
+
+// Variable para evitar múltiples ejecuciones
+let isSubmitting = false;
+
 // Función para manejar el envío del formulario (disponible globalmente)
 window.handleFormSubmit = async function handleFormSubmit(event) {
+    // Prevenir múltiples ejecuciones
+    if (isSubmitting) {
+        console.log('Form submission already in progress, ignoring duplicate call');
+        return;
+    }
+    
     event.preventDefault(); // Prevenir el envío normal del formulario
+    
+    // Marcar como en proceso
+    isSubmitting = true;
     
     // Asegurar que tenemos un HTMLFormElement
     let form = event.target;
@@ -266,14 +276,24 @@ window.handleFormSubmit = async function handleFormSubmit(event) {
         form = form.closest('form');
     }
     
+    // Si aún no tenemos un form, buscar en el documento
     if (!form || form.tagName !== 'FORM') {
-        console.error('No se pudo encontrar el formulario válido');
+        // Buscar el primer formulario que contenga campos de registro
+        form = document.querySelector('form[id*="register"], form[class*="register"], form[class*="xpsocial"]');
+    }
+    
+    if (!form || form.tagName !== 'FORM') {
+        console.error('No se pudo encontrar el formulario válido', {
+            target: event.target,
+            targetTagName: event.target ? event.target.tagName : 'undefined',
+            foundForm: form
+        });
         return;
     }
     
     const formData = new FormData(form);
-    const submitButton = form.querySelector('input[type="submit"]');
-    const originalButtonText = submitButton ? submitButton.value : 'Enviar';
+    const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
+    const originalButtonText = submitButton ? (submitButton.value || submitButton.textContent) : 'Enviar';
     
     // Asegurar que el nonce esté incluido
     const nonceField = form.querySelector('input[name="register_form_nonce"]');
@@ -292,7 +312,11 @@ window.handleFormSubmit = async function handleFormSubmit(event) {
     
     // Mostrar estado de carga
     if (submitButton) {
-        submitButton.value = "Enviando...";
+        if (submitButton.tagName === 'INPUT') {
+            submitButton.value = "Enviando...";
+        } else {
+            submitButton.textContent = "Enviando...";
+        }
         submitButton.disabled = true;
     }
     
@@ -335,9 +359,16 @@ window.handleFormSubmit = async function handleFormSubmit(event) {
     } finally {
         // Restaurar el botón
         if (submitButton) {
-            submitButton.value = originalButtonText;
+            if (submitButton.tagName === 'INPUT') {
+                submitButton.value = originalButtonText;
+            } else {
+                submitButton.textContent = originalButtonText;
+            }
             submitButton.disabled = false;
         }
+        
+        // Resetear flag de envío
+        isSubmitting = false;
     }
 }
 

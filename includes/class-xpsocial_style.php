@@ -22,7 +22,7 @@ function xpsocial_enqueue_styles_forms()
 
     $custom_css = "
     .xpsocial-form {
-        background-color: {$xp_div_color};
+        background-color:transparent;
         padding: 12px;
     }
 
@@ -75,10 +75,10 @@ function xpsocial_enqueue_styles_forms()
         display: flex;
     }
     .select-container span :first-child  {
-        flex-grow: 2;
         width: unset;
-        padding-right:20px;
-    }.select-container span :last-child  {
+        padding-right:30px;
+    }
+    .select-container span :last-child  {
         flex-grow: 3;
     }
     /* Estilo para el contenedor del select */

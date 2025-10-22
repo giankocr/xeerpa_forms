@@ -481,6 +481,7 @@ class Xpsocial_Forms_CPT
         $validate_age = get_post_meta($post->ID, '_xpsocial_validate_age', true);
         $min_age = get_post_meta($post->ID, '_xpsocial_min_age', true) ?: 18;
         
+        
         ?>
         <table class="form-table">
             <tr>
@@ -494,7 +495,7 @@ class Xpsocial_Forms_CPT
                 <th scope="row"><label for="xpsocial_success_html">Mensaje de Éxito</label></th>
                 <td>
                     <textarea id="xpsocial_success_html" name="xpsocial_success_html" rows="5" cols="50" class="large-text"><?php echo esc_textarea($success_html); ?></textarea>
-                    <p class="description">HTML que se mostrará después del registro exitoso (solo si no se configura redirect)</p>
+                    <p class="description">HTML que se mostrará después del registro exitoso (solo si no se configura redirect). Puedes usar etiquetas HTML como &lt;h1&gt;, &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;a&gt;, etc.</p>
                 </td>
             </tr>
             <tr>
@@ -572,6 +573,7 @@ class Xpsocial_Forms_CPT
                 </td>
             </tr>
         </table>
+        
         <?php
     }
 
@@ -614,14 +616,17 @@ class Xpsocial_Forms_CPT
                                 <tr>
                                     <th scope="row"><label>Tipo</label></th>
                                     <td>
-                                        <select name="fields[<?php echo $index; ?>][type]">
+                                        <select name="fields[<?php echo $index; ?>][type]" class="field-type-select">
                                             <option value="text" <?php selected($field['type'], 'text'); ?>>Texto</option>
                                             <option value="textarea" <?php selected($field['type'], 'textarea'); ?>>Área de Texto</option>
                                             <option value="select" <?php selected($field['type'], 'select'); ?>>Lista Desplegable</option>
                                             <option value="radio" <?php selected($field['type'], 'radio'); ?>>Botones de Radio</option>
                                             <option value="checkbox" <?php selected($field['type'], 'checkbox'); ?>>Casillas de Verificación</option>
-                                            <option value="audio" <?php selected($field['type'], 'audio'); ?>>Audio</option>
+                                            <option value="hidden" <?php selected($field['type'], 'hidden'); ?>>Campo Oculto</option>
+                                            <option value="audio" <?php selected($field['type'], 'audio'); ?>>Audio (Grabar/Subir)</option>
+                                            <option value="video" <?php selected($field['type'], 'video'); ?>>Video</option>
                                             <option value="image" <?php selected($field['type'], 'image'); ?>>Imagen</option>
+                                            <option value="file" <?php selected($field['type'], 'file'); ?>>Archivo</option>
                                         </select>
                                     </td>
                                 </tr>
@@ -636,6 +641,15 @@ class Xpsocial_Forms_CPT
                                     <th scope="row"><label>Placeholder</label></th>
                                     <td><input type="text" name="fields[<?php echo $index; ?>][placeholder]" value="<?php echo esc_attr($field['placeholder']); ?>" class="regular-text" /></td>
                                 </tr>
+                                
+                                <!-- Campo para valor por defecto (solo para campos ocultos) -->
+                                <tr class="default-value-row" style="<?php echo $field['type'] === 'hidden' ? '' : 'display: none;'; ?>">
+                                    <th scope="row"><label>Valor por Defecto</label></th>
+                                    <td>
+                                        <input type="text" name="fields[<?php echo $index; ?>][default_value]" value="<?php echo esc_attr($field['default_value'] ?? ''); ?>" class="regular-text" />
+                                        <p class="description">Valor que tendrá el campo oculto por defecto</p>
+                                    </td>
+                                </tr>
                                 <tr>
                                     <th scope="row"><label>Opciones (para select, radio, checkbox)</label></th>
                             <td>
@@ -643,6 +657,69 @@ class Xpsocial_Forms_CPT
                                 <textarea name="fields[<?php echo $index; ?>][options]" rows="3" cols="50" class="large-text"><?php echo esc_textarea($options_value); ?></textarea>
                                 <p class="description">Una opción por línea</p>
                             </td>
+                                </tr>
+                                
+                                <!-- Configuraciones específicas para campos de archivo -->
+                                <tr class="file-config-row" style="<?php echo in_array($field['type'], ['audio', 'video', 'image', 'file']) ? '' : 'display: none;'; ?>">
+                                    <th scope="row"><label>Configuración de Archivo</label></th>
+                                    <td>
+                                        <div class="file-config-container">
+                                            <!-- Formatos permitidos -->
+                                            <div class="file-config-item">
+                                                <label><strong>Formatos Permitidos:</strong></label><br>
+                                                <input type="text" name="fields[<?php echo $index; ?>][allowed_formats]" 
+                                                       value="<?php echo esc_attr($field['allowed_formats'] ?? ''); ?>" 
+                                                       class="regular-text" 
+                                                       placeholder="<?php echo $field['type'] === 'audio' ? 'mp3,wav,m4a' : ($field['type'] === 'video' ? 'mp4,avi,mov' : ($field['type'] === 'image' ? 'jpg,jpeg,png,gif' : 'pdf,doc,docx,txt')); ?>" />
+                                                <p class="description">Formatos permitidos separados por comas</p>
+                                            </div>
+                                            
+                                            <!-- Tamaño máximo -->
+                                            <div class="file-config-item">
+                                                <label><strong>Tamaño Máximo (MB):</strong></label><br>
+                                                <input type="number" name="fields[<?php echo $index; ?>][max_size_mb]" 
+                                                       value="<?php echo esc_attr($field['max_size_mb'] ?? ''); ?>" 
+                                                       class="small-text" min="1" max="100" 
+                                                       placeholder="<?php echo $field['type'] === 'image' ? '5' : '10'; ?>" />
+                                                <p class="description">Tamaño máximo en MB</p>
+                                            </div>
+                                            
+                                            <!-- Duración máxima (solo para audio/video) -->
+                                            <?php if (in_array($field['type'], ['audio', 'video'])): ?>
+                                            <div class="file-config-item">
+                                                <label><strong>Duración Máxima (segundos):</strong></label><br>
+                                                <input type="number" name="fields[<?php echo $index; ?>][max_duration]" 
+                                                       value="<?php echo esc_attr($field['max_duration'] ?? ''); ?>" 
+                                                       class="small-text" min="1" max="3600" 
+                                                       placeholder="<?php echo $field['type'] === 'audio' ? '300' : '600'; ?>" />
+                                                <p class="description">Duración máxima en segundos</p>
+                                            </div>
+                                            <?php endif; ?>
+                                            
+                                            <!-- Permitir grabación (solo para audio) -->
+                                            <?php if ($field['type'] === 'audio'): ?>
+                                            <div class="file-config-item">
+                                                <label>
+                                                    <input type="hidden" name="fields[<?php echo $index; ?>][allow_recording]" value="0" />
+                                                    <input type="checkbox" name="fields[<?php echo $index; ?>][allow_recording]" 
+                                                           value="1" <?php checked($field['allow_recording'] ?? '1', '1'); ?> />
+                                                    <strong>Permitir grabación desde el dispositivo</strong>
+                                                </label>
+                                                <p class="description">Permite grabar audio directamente desde el micrófono del dispositivo</p>
+                                            </div>
+                                            
+                                            <div class="file-config-item">
+                                                <label>
+                                                    <input type="hidden" name="fields[<?php echo $index; ?>][allow_file_upload]" value="0" />
+                                                    <input type="checkbox" name="fields[<?php echo $index; ?>][allow_file_upload]" 
+                                                           value="1" <?php checked($field['allow_file_upload'] ?? '1', '1'); ?> />
+                                                    <strong>Permitir subir archivo de audio</strong>
+                                                </label>
+                                                <p class="description">Permite subir un archivo de audio existente desde el dispositivo</p>
+                                            </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
                                 </tr>
                             </table>
                         </div>
@@ -682,8 +759,11 @@ class Xpsocial_Forms_CPT
                                         <option value="select">Lista Desplegable</option>
                                         <option value="radio">Botones de Radio</option>
                                         <option value="checkbox">Casillas de Verificación</option>
-                                        <option value="audio">Audio</option>
+                                        <option value="hidden">Campo Oculto</option>
+                                        <option value="audio">Audio (Grabar/Subir)</option>
+                                        <option value="video">Video</option>
                                         <option value="image">Imagen</option>
+                                        <option value="file">Archivo</option>
                                     </select>
                                 </td>
                             </tr>
@@ -698,11 +778,71 @@ class Xpsocial_Forms_CPT
                                 <th scope="row"><label>Placeholder</label></th>
                                 <td><input type="text" name="fields[${fieldIndex}][placeholder]" value="" class="regular-text" /></td>
                             </tr>
+                            
+                            <!-- Campo para valor por defecto (solo para campos ocultos) -->
+                            <tr class="default-value-row" style="display: none;">
+                                <th scope="row"><label>Valor por Defecto</label></th>
+                                <td>
+                                    <input type="text" name="fields[${fieldIndex}][default_value]" value="" class="regular-text" />
+                                    <p class="description">Valor que tendrá el campo oculto por defecto</p>
+                                </td>
+                            </tr>
                             <tr>
                                 <th scope="row"><label>Opciones (para select, radio, checkbox)</label></th>
                                 <td>
                                     <textarea name="fields[${fieldIndex}][options]" rows="3" cols="50" class="large-text"></textarea>
                                     <p class="description">Una opción por línea</p>
+                                </td>
+                            </tr>
+                            
+                            <!-- Configuraciones específicas para campos de archivo -->
+                            <tr class="file-config-row" style="display: none;">
+                                <th scope="row"><label>Configuración de Archivo</label></th>
+                                <td>
+                                    <div class="file-config-container">
+                                        <!-- Formatos permitidos -->
+                                        <div class="file-config-item">
+                                            <label><strong>Formatos Permitidos:</strong></label><br>
+                                            <input type="text" name="fields[${fieldIndex}][allowed_formats]" 
+                                                   value="" class="regular-text" placeholder="mp3,wav,m4a" />
+                                            <p class="description">Formatos permitidos separados por comas</p>
+                                        </div>
+                                        
+                                        <!-- Tamaño máximo -->
+                                        <div class="file-config-item">
+                                            <label><strong>Tamaño Máximo (MB):</strong></label><br>
+                                            <input type="number" name="fields[${fieldIndex}][max_size_mb]" 
+                                                   value="" class="small-text" min="1" max="100" placeholder="10" />
+                                            <p class="description">Tamaño máximo en MB</p>
+                                        </div>
+                                        
+                                        <!-- Duración máxima (solo para audio/video) -->
+                                        <div class="file-config-item duration-config" style="display: none;">
+                                            <label><strong>Duración Máxima (segundos):</strong></label><br>
+                                            <input type="number" name="fields[${fieldIndex}][max_duration]" 
+                                                   value="" class="small-text" min="1" max="3600" placeholder="300" />
+                                            <p class="description">Duración máxima en segundos</p>
+                                        </div>
+                                        
+                                        <!-- Permitir grabación (solo para audio) -->
+                                        <div class="file-config-item recording-config" style="display: none;">
+                                            <label>
+                                                <input type="hidden" name="fields[${fieldIndex}][allow_recording]" value="0" />
+                                                <input type="checkbox" name="fields[${fieldIndex}][allow_recording]" value="1" checked />
+                                                <strong>Permitir grabación desde el dispositivo</strong>
+                                            </label>
+                                            <p class="description">Permite grabar audio directamente desde el micrófono del dispositivo</p>
+                                        </div>
+                                        
+                                        <div class="file-config-item upload-config" style="display: none;">
+                                            <label>
+                                                <input type="hidden" name="fields[${fieldIndex}][allow_file_upload]" value="0" />
+                                                <input type="checkbox" name="fields[${fieldIndex}][allow_file_upload]" value="1" checked />
+                                                <strong>Permitir subir archivo de audio</strong>
+                                            </label>
+                                            <p class="description">Permite subir un archivo de audio existente desde el dispositivo</p>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         </table>
@@ -715,6 +855,72 @@ class Xpsocial_Forms_CPT
             
             $(document).on('click', '.remove-field', function() {
                 $(this).closest('.field-item').remove();
+            });
+            
+            // Manejar cambio de tipo de campo
+            $(document).on('change', '.field-type-select', function() {
+                var $row = $(this).closest('.field-item');
+                var $fileConfigRow = $row.find('.file-config-row');
+                var $defaultValueRow = $row.find('.default-value-row');
+                var $durationConfig = $row.find('.duration-config');
+                var $recordingConfig = $row.find('.recording-config');
+                var fieldType = $(this).val();
+                
+                // Mostrar/ocultar campo de valor por defecto para campos ocultos
+                if (fieldType === 'hidden') {
+                    $defaultValueRow.show();
+                } else {
+                    $defaultValueRow.hide();
+                }
+                
+                // Mostrar/ocultar configuración de archivo
+                if (['audio', 'video', 'image', 'file'].includes(fieldType)) {
+                    $fileConfigRow.show();
+                    
+                    // Mostrar/ocultar configuración de duración
+                    if (['audio', 'video'].includes(fieldType)) {
+                        $durationConfig.show();
+                    } else {
+                        $durationConfig.hide();
+                    }
+                    
+                    // Mostrar/ocultar configuración de grabación y subida
+                    if (fieldType === 'audio') {
+                        $recordingConfig.show();
+                        $row.find('.upload-config').show();
+                    } else {
+                        $recordingConfig.hide();
+                        $row.find('.upload-config').hide();
+                    }
+                    
+                    // Actualizar placeholders según el tipo
+                    var $allowedFormats = $row.find('input[name*="[allowed_formats]"]');
+                    var $maxSize = $row.find('input[name*="[max_size_mb]"]');
+                    var $maxDuration = $row.find('input[name*="[max_duration]"]');
+                    
+                    switch(fieldType) {
+                        case 'audio':
+                            $allowedFormats.attr('placeholder', 'mp3,wav,m4a');
+                            $maxSize.attr('placeholder', '10');
+                            $maxDuration.attr('placeholder', '300');
+                            break;
+                        case 'video':
+                            $allowedFormats.attr('placeholder', 'mp4,avi,mov');
+                            $maxSize.attr('placeholder', '50');
+                            $maxDuration.attr('placeholder', '600');
+                            break;
+                        case 'image':
+                            $allowedFormats.attr('placeholder', 'jpg,jpeg,png,gif');
+                            $maxSize.attr('placeholder', '5');
+                            break;
+                        case 'file':
+                            $allowedFormats.attr('placeholder', 'pdf,doc,docx,txt');
+                            $maxSize.attr('placeholder', '10');
+                            break;
+                    }
+                } else {
+                    $fileConfigRow.hide();
+                }
             });
         });
         </script>
@@ -734,6 +940,37 @@ class Xpsocial_Forms_CPT
         }
         .field-header h4 {
             margin: 0;
+        }
+        
+        .file-config-container {
+            background: #fff;
+            border: 1px solid #e1e1e1;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        
+        .file-config-item {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .file-config-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .file-config-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .file-config-item input[type="text"],
+        .file-config-item input[type="number"] {
+            width: 100%;
+            max-width: 300px;
         }
         </style>
         <?php
@@ -781,7 +1018,42 @@ class Xpsocial_Forms_CPT
         foreach ($fields_to_save as $field) {
             $post_key = str_replace('_xpsocial_', 'xpsocial_', $field);
             if (isset($_POST[$post_key])) {
-                $value = sanitize_text_field($_POST[$post_key]);
+                // Permitir HTML en el campo success_html
+                if ($field === '_xpsocial_success_html') {
+                    // Permitir etiquetas HTML comunes para mensajes de éxito
+                    $allowed_html = array(
+                        'h1' => array(),
+                        'h2' => array(),
+                        'h3' => array(),
+                        'h4' => array(),
+                        'h5' => array(),
+                        'h6' => array(),
+                        'p' => array(),
+                        'div' => array('class' => array(), 'id' => array()),
+                        'span' => array('class' => array(), 'id' => array()),
+                        'strong' => array(),
+                        'em' => array(),
+                        'b' => array(),
+                        'i' => array(),
+                        'u' => array(),
+                        'br' => array(),
+                        'a' => array('href' => array(), 'target' => array(), 'class' => array()),
+                        'img' => array('src' => array(), 'alt' => array(), 'class' => array(), 'width' => array(), 'height' => array()),
+                        'ul' => array('class' => array()),
+                        'ol' => array('class' => array()),
+                        'li' => array(),
+                        'blockquote' => array('class' => array()),
+                        'small' => array(),
+                        'mark' => array(),
+                        'del' => array(),
+                        'ins' => array(),
+                        'sub' => array(),
+                        'sup' => array()
+                    );
+                    $value = wp_kses($_POST[$post_key], $allowed_html);
+                } else {
+                    $value = sanitize_text_field($_POST[$post_key]);
+                }
                 update_post_meta($post_id, $field, $value);
             } else {
                 // Para checkboxes, si no están presentes, significa que están desmarcados
@@ -815,7 +1087,7 @@ class Xpsocial_Forms_CPT
                         }
                     }
 
-                    $fields[] = array(
+                    $field_data = array(
                         'label' => sanitize_text_field($label),
                         'name' => sanitize_text_field($field['name']),
                         'type' => sanitize_text_field($field['type']),
@@ -823,8 +1095,35 @@ class Xpsocial_Forms_CPT
                         'options' => in_array($field['type'], array('select','radio','checkbox'), true) ? $options_array : sanitize_textarea_field($options_raw),
                         'placeholder' => sanitize_text_field($placeholder)
                     );
+                    
+                    // Agregar valor por defecto para campos ocultos
+                    if ($field['type'] === 'hidden' && isset($field['default_value'])) {
+                        $field_data['default_value'] = sanitize_text_field($field['default_value']);
+                    }
+                    
+                    // Agregar configuraciones específicas para campos de archivo
+                    if (in_array($field['type'], ['audio', 'video', 'image', 'file'])) {
+                        if (isset($field['allowed_formats'])) {
+                            $field_data['allowed_formats'] = sanitize_text_field($field['allowed_formats']);
+                        }
+                        if (isset($field['max_size_mb'])) {
+                            $field_data['max_size_mb'] = sanitize_text_field($field['max_size_mb']);
+                        }
+                        if (isset($field['max_duration'])) {
+                            $field_data['max_duration'] = sanitize_text_field($field['max_duration']);
+                        }
+                        if (isset($field['allow_recording'])) {
+                            $field_data['allow_recording'] = sanitize_text_field($field['allow_recording']);
+                        }
+                        if (isset($field['allow_file_upload'])) {
+                            $field_data['allow_file_upload'] = sanitize_text_field($field['allow_file_upload']);
+                        }
+                    }
+                    
+                    $fields[] = $field_data;
                 }
             }
+            
             // Guardar como JSON string con codificación UTF-8
             update_post_meta($post_id, '_xpsocial_dynamic_fields', json_encode($fields, JSON_UNESCAPED_UNICODE));
         } else {

@@ -35,14 +35,14 @@
 
     // Initialize validation configuration from form data attributes
     function initializeValidationConfig() {
-        const form = $('.xpsocial-form');
-        if (form.length) {
+        const formContainer = $('.xpsocial-form');
+        if (formContainer.length) {
             // Read data attributes correctly (jQuery converts kebab-case to camelCase)
-            VALIDATION_CONFIG.validateEmail = form.data('validateEmail') === 1 || form.data('validate-email') === 1;
-            VALIDATION_CONFIG.validateIdNumber = form.data('validateIdNumber') === 1 || form.data('validate-id-number') === 1;
-            VALIDATION_CONFIG.validateAge = form.data('validateAge') === 1 || form.data('validate-age') === 1;
-            VALIDATION_CONFIG.minAge = parseInt(form.data('minAge') || form.data('min-age')) || 18;
-            
+            VALIDATION_CONFIG.validateEmail = formContainer.data('validateEmail') === 1 || formContainer.data('validate-email') === 1;
+            VALIDATION_CONFIG.validateIdNumber = formContainer.data('validateIdNumber') === 1 || formContainer.data('validate-id-number') === 1;
+            VALIDATION_CONFIG.validateAge = formContainer.data('validateAge') === 1 || formContainer.data('validate-age') === 1;
+            VALIDATION_CONFIG.minAge = parseInt(formContainer.data('minAge') || formContainer.data('min-age')) || 18;
+            VALIDATION_CONFIG.formSource = formContainer.data('source') || '';
         }
     }
 
@@ -259,8 +259,8 @@
 
     // Get form source
     function getFormSource() {
-        const form = $('.xpsocial-form');
-        return form.data('source') || '';
+        const formContainer = $('.xpsocial-form');
+        return formContainer.data('source') || '';
     }
 
     // Debounced validation functions
@@ -278,9 +278,10 @@
 
     // Initialize validation
     function initValidation() {
-        const form = $('.xpsocial-form');
+        const formContainer = $('.xpsocial-form');
+        const form = $('#register_form');
         
-        if (form.length === 0) {
+        if (formContainer.length === 0 || form.length === 0) {
             return; // No dynamic form found
         }
 
@@ -394,7 +395,7 @@
             form.off('submit'); // Remove event handler to prevent infinite loop
             
             // Use our custom form submission handler if it exists
-            if (typeof handleFormSubmit === 'function') {
+            if (typeof window.handleFormSubmit === 'function') {
                 // Create a synthetic event object with the correct form element
                 const formElement = form[0];
                 const syntheticEvent = {
@@ -403,8 +404,9 @@
                 };
                 
                 // Call our handler directly with the form element
-                handleFormSubmit(syntheticEvent);
+                window.handleFormSubmit(syntheticEvent);
             } else {
+                console.warn('handleFormSubmit not available, using fallback submission');
                 // Fallback to default submission
                 form[0].submit();
             }
@@ -417,10 +419,27 @@
     });
 
     // Re-initialize when new content is loaded (for dynamic forms)
-    $(document).on('DOMNodeInserted', function(e) {
-        if ($(e.target).hasClass('xpsocial-form') || $(e.target).find('.xpsocial-form').length > 0) {
-            setTimeout(initValidation, 100);
-        }
-    });
+    // DOMNodeInserted is deprecated, using MutationObserver instead
+    if (window.MutationObserver) {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList') {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1) { // Element node
+                            if (node.classList && node.classList.contains('xpsocial-form') || 
+                                (node.querySelector && node.querySelector('.xpsocial-form'))) {
+                                setTimeout(initValidation, 100);
+                            }
+                        }
+                    });
+                }
+            });
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
 
 })(jQuery);

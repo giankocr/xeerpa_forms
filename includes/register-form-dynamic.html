@@ -72,7 +72,7 @@
             <div class="phone_field">
                 <div class="select-container">
                     <label for="field_countryPhoneCode">Código + Teléfono</label>
-                    <span >
+                    <span class="select-container-span">
                         <select name="field_countryPhoneCode" id="field_countryPhoneCode" required autocomplete="off" 
                                 title="Seleccione el código de país.">
                             <option value="" disabled selected class="placeholder">Código</option>
@@ -221,20 +221,72 @@
                         </div>
                     
                     <?php elseif ($field['type'] == 'audio'): ?>
+                        <div class="xpsocial-audio-field" 
+                             data-field-name="dynamic_<?php echo esc_attr($field['name']); ?>"
+                             data-field-id="dynamic_<?php echo esc_attr($field['name']); ?>"
+                             data-allowed-formats="<?php echo esc_attr($field['allowed_formats'] ?? 'mp3,wav,m4a,webm'); ?>"
+                             data-max-duration="<?php echo esc_attr($field['max_duration'] ?? '300'); ?>"
+                             data-max-size-mb="<?php echo esc_attr($field['max_size_mb'] ?? '10'); ?>"
+                             data-allow-recording="<?php echo esc_attr($field['allow_recording'] ?? '1'); ?>"
+                             data-allow-file-upload="<?php echo esc_attr($field['allow_file_upload'] ?? '1'); ?>">
+                        </div>
+                        <p class="description">
+                            Formatos permitidos: <?php echo esc_html(strtoupper(str_replace(',', ', ', $field['allowed_formats'] ?? 'mp3,wav,m4a,webm'))); ?>
+                            <?php if (!empty($field['max_duration'])): ?>
+                                | Duración máxima: <?php echo esc_html(round($field['max_duration'] / 60, 1)); ?> minutos
+                            <?php endif; ?>
+                            <?php if (!empty($field['max_size_mb'])): ?>
+                                | Tamaño máximo: <?php echo esc_html($field['max_size_mb']); ?>MB
+                            <?php endif; ?>
+                        </p>
+                    
+                    <?php elseif ($field['type'] == 'video'): ?>
                         <input type="file" 
                                id="dynamic_<?php echo esc_attr($field['name']); ?>" 
                                name="dynamic_<?php echo esc_attr($field['name']); ?>" 
-                               accept="audio/*"
+                               accept="<?php echo esc_attr(implode(',', array_map(function($format) { return '.' . $format; }, explode(',', $field['allowed_formats'] ?? 'mp4,avi,mov')))); ?>"
                                <?php echo $field['required'] == '1' ? 'required' : ''; ?>>
-                        <p class="description">Formatos permitidos: MP3, WAV, OGG</p>
+                        <p class="description">
+                            Formatos permitidos: <?php echo esc_html(strtoupper(str_replace(',', ', ', $field['allowed_formats'] ?? 'mp4,avi,mov'))); ?>
+                            <?php if (!empty($field['max_duration'])): ?>
+                                | Duración máxima: <?php echo esc_html(round($field['max_duration'] / 60, 1)); ?> minutos
+                            <?php endif; ?>
+                            <?php if (!empty($field['max_size_mb'])): ?>
+                                | Tamaño máximo: <?php echo esc_html($field['max_size_mb']); ?>MB
+                            <?php endif; ?>
+                        </p>
                     
                     <?php elseif ($field['type'] == 'image'): ?>
                         <input type="file" 
                                id="dynamic_<?php echo esc_attr($field['name']); ?>" 
                                name="dynamic_<?php echo esc_attr($field['name']); ?>" 
-                               accept="image/*"
+                               accept="<?php echo esc_attr(implode(',', array_map(function($format) { return '.' . $format; }, explode(',', $field['allowed_formats'] ?? 'jpg,jpeg,png,gif')))); ?>"
                                <?php echo $field['required'] == '1' ? 'required' : ''; ?>>
-                        <p class="description">Formatos permitidos: JPG, PNG, GIF</p>
+                        <p class="description">
+                            Formatos permitidos: <?php echo esc_html(strtoupper(str_replace(',', ', ', $field['allowed_formats'] ?? 'jpg,jpeg,png,gif'))); ?>
+                            <?php if (!empty($field['max_size_mb'])): ?>
+                                | Tamaño máximo: <?php echo esc_html($field['max_size_mb']); ?>MB
+                            <?php endif; ?>
+                        </p>
+                    
+                    <?php elseif ($field['type'] == 'file'): ?>
+                        <input type="file" 
+                               id="dynamic_<?php echo esc_attr($field['name']); ?>" 
+                               name="dynamic_<?php echo esc_attr($field['name']); ?>" 
+                               accept="<?php echo esc_attr(implode(',', array_map(function($format) { return '.' . $format; }, explode(',', $field['allowed_formats'] ?? 'pdf,doc,docx,txt')))); ?>"
+                               <?php echo $field['required'] == '1' ? 'required' : ''; ?>>
+                        <p class="description">
+                            Formatos permitidos: <?php echo esc_html(strtoupper(str_replace(',', ', ', $field['allowed_formats'] ?? 'pdf,doc,docx,txt'))); ?>
+                            <?php if (!empty($field['max_size_mb'])): ?>
+                                | Tamaño máximo: <?php echo esc_html($field['max_size_mb']); ?>MB
+                            <?php endif; ?>
+                        </p>
+                    
+                    <?php elseif ($field['type'] == 'hidden'): ?>
+                        <input type="hidden" 
+                               id="dynamic_<?php echo esc_attr($field['name']); ?>" 
+                               name="dynamic_<?php echo esc_attr($field['name']); ?>" 
+                               value="<?php echo esc_attr($field['default_value'] ?? ''); ?>">
                     <?php endif; ?>
                 </div>
             <?php endforeach; ?>

@@ -75,6 +75,7 @@ class Xpsocial_login_Public
          */
 
         wp_enqueue_style($this->plugin_name, plugin_dir_url(__FILE__) . 'css/xpsocial_login-public.css', array(), $this->version, 'all');
+        wp_enqueue_style($this->plugin_name . '-audio-recorder', plugin_dir_url(__FILE__) . 'css/xpsocial_audio_recorder.css', array(), $this->version, 'all');
         
         // Agregar CSS dinámico para el formulario dinámico
         $this->add_dynamic_form_styles();
@@ -158,17 +159,17 @@ class Xpsocial_login_Public
         $css = "
         /* Estilos dinámicos del formulario basados en configuración del plugin */
 
-        .xpsocial-form input[type=\"text\"],
-        .xpsocial-form input[type=\"email\"],
-        .xpsocial-form input[type=\"tel\"],
-        .xpsocial-form input[type=\"date\"],
-        .xpsocial-form input[type=\"number\"],
-        .xpsocial-form input[type=\"password\"],
-        .xpsocial-form input[type=\"search\"],
-        .xpsocial-form input[type=\"url\"],
-        .xpsocial-form input[type=\"radio\"],
-        .xpsocial-form input[type=\"hidden\"],
+        .xpsocial-form input:not([type=checkbox]),
+        .xpsocial-form input:not([type=radio]),
         .xpsocial-form select,
+        .xpsocial-form input:not([type=file]),
+        .xpsocial-form input:not([type=range]),
+        .xpsocial-form input:not([type=color]),
+        .xpsocial-form input:not([type=date]),
+        .xpsocial-form input:not([type=datetime-local]),
+        .xpsocial-form input:not([type=month]),
+        .xpsocial-form input:not([type=time]),
+        .xpsocial-form input:not([type=week]),
         .xpsocial-form textarea {
             height: {$input_height}px;
             border: {$input_border};
@@ -221,10 +222,13 @@ class Xpsocial_login_Public
         wp_enqueue_script($this->plugin_name, plugin_dir_url(__FILE__) . 'js/xpsocial_login-public.js', array( 'jquery' ), $this->version, true);
         wp_enqueue_script($this->plugin_name . '-forms', plugin_dir_url(__FILE__) . 'js/xpsocial_forms.js', array( 'jquery' ), $this->version, true);
         wp_enqueue_script($this->plugin_name . '-validation', plugin_dir_url(__FILE__) . 'js/xpsocial_validation.js', array( 'jquery' ), $this->version, true);
+        wp_enqueue_script($this->plugin_name . '-audio-recorder', plugin_dir_url(__FILE__) . 'js/xpsocial_audio_recorder.js', array(), $this->version, true);
+        wp_enqueue_script($this->plugin_name . '-audio-transfer', plugin_dir_url(__FILE__) . 'js/imperial-audio-transfer.js', array(), $this->version, true);
         
         // Localizar ajaxurl para el frontend
         wp_localize_script($this->plugin_name . '-forms', 'xpsocial_ajax', array(
-            'ajaxurl' => admin_url('admin-ajax.php')
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('xpsocial_ajax_nonce')
         ));
     }
 }

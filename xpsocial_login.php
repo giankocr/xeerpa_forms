@@ -71,7 +71,7 @@ require plugin_dir_path(__FILE__) . 'includes/class-xpsocial_login.php';
 */
 require plugin_dir_path(__FILE__) . 'includes/opciones.php';
 require plugin_dir_path(__FILE__) . 'includes/recomendador.php'; // TODO- configurar el recomendador
-
+require plugin_dir_path(__FILE__) . 'record_larefri_imperial.php';
 /*
 *   Include Custom Post Type for forms and leads manager
 */

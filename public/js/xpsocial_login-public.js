@@ -242,6 +242,10 @@ async function receiveData(data) {
         document.getElementById("field_sn").value = sn;
       }
     } else {
+
+        const tt_text = document.getElementById("field_tt_text");
+        tt_text.style.display = "block";
+
       if (document.getElementById("field_firstname")) {
         document.getElementById("field_snid").value = snid;
         document.getElementById("field_it").value = it;

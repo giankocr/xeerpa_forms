@@ -71,7 +71,7 @@ class Xpsocial_login
         if (defined('XPSOCIAL_LOGIN_VERSION')) {
             $this->version = XPSOCIAL_LOGIN_VERSION;
         } else {
-            $this->version = '1.0.0';
+            $this->version = '5.1.0';
         }
         $this->plugin_name = 'xpsocial_login';
 
@@ -228,6 +228,7 @@ class Xpsocial_login
         return $this->version;
     }
 
+<<<<<<< HEAD
     /**
      * Initialize Git Updater
      *
@@ -238,4 +239,6 @@ class Xpsocial_login
         $plugin_file = plugin_basename(dirname(__FILE__) . '/../xpsocial_login.php');
         new Xpsocial_Git_Updater(plugin_dir_path(dirname(__FILE__)) . '../' . $plugin_file);
     }
+=======
+>>>>>>> b298d82 (audios funcionan)
 }

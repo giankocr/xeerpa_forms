@@ -1,7 +1,7 @@
 {
     "name": "gianko/xpsocial_login",
     "description": "Plugin para conectar wordpress con los api de Xeerpa Social.",
-    "version": "3.0.7",
+    "version": "5.1.0",
     "type": "wordpress-plugin",
     "require": {
         "php": ">=7.4",
@@ -26,6 +26,7 @@
         "lint": "phpcs --standard=PSR12 --ignore=vendor/* ./",
         "lint-fix": "phpcbf --standard=PSR12 --ignore=vendor/* ./",
         "build": "echo 'Construyendo...' && composer archive --format=zip --file=xpsocial_login",
-        "analyse": "phpstan analyse ./"
+        "analyse": "phpstan analyse ./",
+        "test": "echo 'No tests configured yet'"
     }
 }

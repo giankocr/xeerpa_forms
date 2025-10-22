@@ -8,6 +8,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Incluir la clase de zona horaria
+require_once plugin_dir_path(__FILE__) . 'class-xpsocial_timezone.php';
+
 class Xpsocial_Leads_Manager
 {
     private static $instance = null;
@@ -316,8 +319,8 @@ class Xpsocial_Leads_Manager
             'Province' => sanitize_text_field($data['Province'] ?? ''),
             'Country' => sanitize_text_field($data['Country'] ?? ''),
             'UserRegisterSocial' => sanitize_text_field($data['UserRegisterSocial'] ?? ''),
-            'CaptureDate' => sanitize_text_field($data['CaptureDate'] ?? current_time('Y-m-d H:i:s')),
-            'ModifiedDate' => sanitize_text_field($data['ModifiedDate'] ?? current_time('Y-m-d H:i:s')),
+            'CaptureDate' => sanitize_text_field($data['CaptureDate'] ?? get_costa_rica_datetime('d/m/Y H:i:s')),
+            'ModifiedDate' => sanitize_text_field($data['ModifiedDate'] ?? get_costa_rica_datetime('d/m/Y H:i:s')),
             'PoliticasPrivacidad' => sanitize_text_field($data['PoliticasPrivacidad'] ?? ''),
             'AceptaComunicaciones' => sanitize_text_field($data['AceptaComunicaciones'] ?? ''),
             'Source' => sanitize_text_field($data['Source']),
@@ -822,7 +825,7 @@ class Xpsocial_Leads_Manager
             }
         }
 
-        $update_data['ModifiedDate'] = current_time('Y-m-d H:i:s');
+        $update_data['ModifiedDate'] = get_costa_rica_datetime('d/m/Y H:i:s');
 
         $result = $wpdb->update(
             $this->table_name,

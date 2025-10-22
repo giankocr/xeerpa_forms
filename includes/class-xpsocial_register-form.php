@@ -25,17 +25,17 @@ if (!defined('ABSPATH')) {
     }
     
     // Debug: verificar que WordPress se cargó correctamente
-    error_log('XPSocial Debug - WordPress loaded, ABSPATH: ' . (defined('ABSPATH') ? ABSPATH : 'NOT DEFINED'));
-    error_log('XPSocial Debug - wp_verify_nonce function exists: ' . (function_exists('wp_verify_nonce') ? 'YES' : 'NO'));
 }
 
 // Include configuration and optimization systems
 require_once plugin_dir_path(__FILE__) . 'class-xpsocial_config.php';
 require_once plugin_dir_path(__FILE__) . 'class-xpsocial_cache.php';
 require_once plugin_dir_path(__FILE__) . 'class-xpsocial_performance.php';
+require_once plugin_dir_path(__FILE__) . 'class-xpsocial_timezone.php';
 // Registrar el hook de AJAX para WordPress
 add_action('wp_ajax_xpsocial_register_form', 'after_submission_xeerpa');
 add_action('wp_ajax_nopriv_xpsocial_register_form', 'after_submission_xeerpa');
+
 
 function after_submission_xeerpa()
 {
@@ -157,7 +157,6 @@ function after_submission_xeerpa()
         $provincia = sanitize_text_field($_POST[ 'field_province' ]);
         $snid = sanitize_text_field($_POST[ 'field_snid' ]);
         $sn = sanitize_text_field($_POST[ 'field_sn' ]) ?: 'FM'; // Default to 'FM' if not provided
-        $password = isset($_POST[ 'field_password' ]) ? sanitize_text_field($_POST[ 'field_password' ]) : $it;
 
         // Prepare boolean values - check means "Sí"
         $terms_checked = isset($_POST[ 'field_terms' ]) && $_POST[ 'field_terms' ] === 'si';
@@ -167,23 +166,115 @@ function after_submission_xeerpa()
         $robinson_db = $terms_checked ? 'Sí' : 'No';
         $politicaprivacidad_db = $privacy_checked ? 'Sí' : 'No';
         
-        // For external system (true/false)
-        $robinson = $terms_checked ? 'false' : 'true';
-        $politicaprivacidad = $privacy_checked ? 'true' : 'false';
+        // For external system (true/false) - CORRECTED LOGIC
+        if (isset($_POST[ 'field_terms' ]) && $_POST[ 'field_terms' ] === 'si') {
+            $tcsavedata = 'false'; // User accepts communications
+        } else {
+            $tcsavedata = 'true'; // User does NOT accept communications
+        }
+        
+        if (isset($_POST[ 'field_privacy' ]) && $_POST[ 'field_privacy' ] === 'si') {
+            $ppsavedata = 'true'; // User accepts privacy policy
+        } else {
+            $ppsavedata = 'false'; // User does NOT accept privacy policy
+        }
+        
+        // Validate uploaded files first
+        $file_validation_errors = array();
+        if (!empty($_FILES)) {
+            $file_validation_errors = validate_uploaded_files($form_config, $_FILES);
+        }
+        
+        // If there are file validation errors, return them
+        if (!empty($file_validation_errors)) {
+            header('Content-Type: application/json');
+            http_response_code(400);
+            echo json_encode(array(
+                'success' => false,
+                'message' => 'Errores de validación en archivos subidos',
+                'errors' => $file_validation_errors
+            ));
+            exit;
+        }
         
         // Get dynamic fields data
         $dynamic_fields_data = array();
+        
+        // Log all POST/FILES data for debugging (focus on dynamic fields)
+        $post_snapshot = $_POST;
+        $files_snapshot = $_FILES;
+        // Evitar logs enormes de binarios o campos sensibles
+        foreach ($post_snapshot as $k => $v) {
+            if (is_string($v) && strlen($v) > 2000) {
+                $post_snapshot[$k] = substr($v, 0, 2000) . '...<truncated>';
+            }
+        }
+        
         if ($form_config && !empty($form_config['dynamic_fields'])) {
             foreach ($form_config['dynamic_fields'] as $field) {
                 $field_name = 'dynamic_' . $field['name'];
                 
-                if ($field['type'] === 'audio' || $field['type'] === 'image') {
+                if ($field['type'] === 'audio' || $field['type'] === 'image' || $field['type'] === 'video' || $field['type'] === 'file') {
                     // Handle file uploads
                     if (isset($_FILES[$field_name]) && $_FILES[$field_name]['error'] === UPLOAD_ERR_OK) {
                         $uploaded_file = handle_file_upload($_FILES[$field_name], $field['type'], $field['name']);
                         if ($uploaded_file) {
                             $dynamic_fields_data[$field['name']] = $uploaded_file;
                         }
+                    } elseif (isset($_POST[$field_name . '_filename']) && !empty($_POST[$field_name . '_filename'])) {
+                        // Handle audio files saved via hidden input (from independent recorder)
+                        $filename = sanitize_text_field($_POST[$field_name . '_filename']);
+                        
+                        // Generate full URL for the audio file
+                        $upload_dir = wp_upload_dir();
+                        $audio_dir = $upload_dir['basedir'] . '/social-login/audios';
+                        
+                        // First try with the original filename
+                        $audio_path = $audio_dir . '/' . $filename;
+                        $audio_url = $upload_dir['baseurl'] . '/social-login/audios/' . $filename;
+                        
+                        
+                        if (file_exists($audio_path)) {
+                            $dynamic_fields_data[$field['name']] = $audio_url;
+                        } else {
+                            // If not found with original name, search for files with the same base name
+                            $base_name = pathinfo($filename, PATHINFO_FILENAME);
+                            $extension = pathinfo($filename, PATHINFO_EXTENSION);
+                            
+                            
+                            $found_file = false;
+                            if (is_dir($audio_dir)) {
+                                $files = scandir($audio_dir);
+                                foreach ($files as $file) {
+                                    if (strpos($file, $base_name) !== false && pathinfo($file, PATHINFO_EXTENSION) === $extension) {
+                                        $audio_path = $audio_dir . '/' . $file;
+                                        $audio_url = $upload_dir['baseurl'] . '/social-login/audios/' . $file;
+                                        
+                                        if (file_exists($audio_path)) {
+                                            $dynamic_fields_data[$field['name']] = $audio_url;
+                                            $found_file = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            if (!$found_file) {
+                                $dynamic_fields_data[$field['name']] = $filename;
+                            }
+                        }
+                    } elseif (isset($_POST[$field_name]) && is_string($_POST[$field_name]) && preg_match('/^recording_.*\.(webm|wav|mp3|m4a|ogg)$/i', $_POST[$field_name])) {
+                        // Fallback: algunos navegadores/formas pueden mandar el nombre en el campo principal
+                        $filename = sanitize_text_field($_POST[$field_name]);
+                        $upload_dir = wp_upload_dir();
+                        $audio_path = $upload_dir['basedir'] . '/social-login/audios/' . $filename;
+                        $audio_url = $upload_dir['baseurl'] . '/social-login/audios/' . $filename;
+                        if (file_exists($audio_path)) {
+                            $dynamic_fields_data[$field['name']] = $audio_url;
+                        } else {
+                            $dynamic_fields_data[$field['name']] = $filename;
+                        }
+                    } else {
                     }
                 } elseif (isset($_POST[$field_name])) {
                     if ($field['type'] === 'checkbox') {
@@ -204,6 +295,8 @@ function after_submission_xeerpa()
                 }
             }
         }
+        
+        // Log dynamic fields data before saving
 
         // User creation functionality removed - no longer creating WordPress users
 
@@ -246,8 +339,8 @@ function after_submission_xeerpa()
                 'Province' => $provincia,
                 'Country' => $country_name, // Now contains the actual country name
                 'UserRegisterSocial' => $sn,
-                'CaptureDate' => current_time('Y-m-d H:i:s'),
-                'ModifiedDate' => current_time('Y-m-d H:i:s'),
+                'CaptureDate' => get_costa_rica_datetime('d/m/Y H:i:s'),
+                'ModifiedDate' => get_costa_rica_datetime('d/m/Y H:i:s'),
                 'PoliticasPrivacidad' => $politicaprivacidad_db, // "Sí" or "No"
                 'AceptaComunicaciones' => $robinson_db, // "Sí" or "No"
                 'snid' => $snid,
@@ -283,6 +376,7 @@ function after_submission_xeerpa()
                     'errors' => $validation_errors,
                     'message' => 'Errores de validación encontrados'
                 ));
+                error_log('XPSocial: Validation errors returned: ' . print_r($validation_errors, true));
                 exit;
             }
             
@@ -340,14 +434,36 @@ function after_submission_xeerpa()
                 'message' => 'Registro completado exitosamente',
                 'success_html' => $success_html
             ));
+            error_log('XPSocial: Success response sent with HTML: ' . $success_html);
         }
+         // Start background API calls asynchronously (non-blocking)
+         $user_data_array = array(
+            'email' => $email,
+            'first_name' => $first_name,
+            'last_name' => $last_name,
+            'birthday' => $birthday,
+            'phone' => $phone,
+            'genero' => $genero,
+            'gender_raw' => $gender_raw, // Add raw gender value
+            'IDCedula' => $IDCedula,
+            'provincia' => $provincia,
+            'robinson' => $tcsavedata,
+            'politicaprivacidad' => $ppsavedata,
+            'sn' => $sn,
+            'it' => $it,
+            'snid' => $snid
+        );
+        
+        // Call background processing directly instead of using wp_schedule_single_event
+        process_background_api_calls($user_data_array);
+        error_log("XPSocial: Background API processing triggered for lead ID: " . $lead_id);
         exit;
 
     }
 }
 
 // Background processing function for API calls
-function process_background_api_calls($user_id, $user_data) {
+function process_background_api_calls($user_data) {
     try {
         // Update WordPress native user fields if not already updated
 
@@ -375,7 +491,7 @@ function process_background_api_calls($user_id, $user_data) {
                      '&last_name=' . $user_data['last_name'] .
                      '&birthday=' . $user_data['birthday'] .
                      '&phone=' . $user_data['phone'] .
-                     '&genero=' . $user_data['genero'] .
+                     '&genero=' . $user_data['gender_raw'] . // Use gender_raw instead of genero
                      '&IDCedula=' . $user_data['IDCedula'] .
                      '&id=' . $user_data['email'] .
                      '&provincia=' . $user_data['provincia'] .
@@ -386,12 +502,44 @@ function process_background_api_calls($user_id, $user_data) {
                      '&idcrm=' . $user_data['email'];
 
             $urlSavedata = get_site_url() . '/wp-content/plugins/xpsocial_login/public/socialLoginSaveData.php?' . $params;
-            var_dump($urlSavedata);
-            exit;
-            wp_remote_get($urlSavedata, XPSocial_Performance::get_optimized_request_args(array(
+            
+            // Log the request
+            error_log("XPSocial SaveData Request: " . $urlSavedata);
+            
+            $response = wp_remote_get($urlSavedata, XPSocial_Performance::get_optimized_request_args(array(
                 'method' => 'GET',
                 'blocking' => false, // Make it non-blocking
             )));
+            
+            // Log response details
+            if (is_wp_error($response)) {
+                error_log("XPSocial SaveData Error: " . $response->get_error_message());
+            } else {
+                $response_code = wp_remote_retrieve_response_code($response);
+                $response_body = wp_remote_retrieve_body($response);
+                error_log("XPSocial SaveData Response Code: " . $response_code);
+                error_log("XPSocial SaveData Response Body: " . $response_body);
+                
+                // Store response in database for tracking
+                if (function_exists('update_option')) {
+                    $savedata_logs = get_option('xpsocial_savedata_logs', array());
+                    $savedata_logs[] = array(
+                        'timestamp' => current_time('mysql'),
+                        'email' => $user_data['email'],
+                        'url' => $urlSavedata,
+                        'response_code' => $response_code,
+                        'response_body' => $response_body,
+                        'success' => ($response_code >= 200 && $response_code < 300)
+                    );
+                    
+                    // Keep only last 100 logs
+                    if (count($savedata_logs) > 100) {
+                        $savedata_logs = array_slice($savedata_logs, -100);
+                    }
+                    
+                    update_option('xpsocial_savedata_logs', $savedata_logs);
+                }
+            }
         } else {
             // Call DiscoverUser endpoint
             $urlDiscoveruser = get_option('xpsocial_urlForm');
@@ -428,8 +576,101 @@ function process_background_api_calls($user_id, $user_data) {
     }
 }
 
-// Hook for background processing
-add_action('process_background_api_calls', 'process_background_api_calls', 10, 2);
+// Hook for background processing - removed since we call directly now
+
+// AJAX handler para subir archivos de audio
+add_action('wp_ajax_xpsocial_upload_audio', 'handle_audio_upload');
+add_action('wp_ajax_nopriv_xpsocial_upload_audio', 'handle_audio_upload');
+
+function handle_audio_upload() {
+    // Verificar nonce
+    if (!wp_verify_nonce($_POST['nonce'], 'xpsocial_ajax_nonce')) {
+        wp_die('Security check failed');
+    }
+    
+    // Verificar que hay un archivo
+    if (!isset($_FILES['audio_file']) || $_FILES['audio_file']['error'] !== UPLOAD_ERR_OK) {
+        wp_send_json_error('No audio file received');
+        return;
+    }
+    
+    $file = $_FILES['audio_file'];
+    $filename = sanitize_file_name($file['name']);
+    
+    // Crear directorio si no existe
+    $upload_dir = wp_upload_dir();
+    $audio_dir = $upload_dir['basedir'] . '/social-login/audios';
+    
+    if (!file_exists($audio_dir)) {
+        wp_mkdir_p($audio_dir);
+    }
+    
+    // Generar nombre único
+    $unique_filename = wp_generate_password(12, false) . '_' . $filename;
+    $file_path = $audio_dir . '/' . $unique_filename;
+    
+    // Mover archivo
+    if (move_uploaded_file($file['tmp_name'], $file_path)) {
+        $file_url = $upload_dir['baseurl'] . '/social-login/audios/' . $unique_filename;
+        
+        error_log('XPSocial: Audio file uploaded successfully - ' . $file_url);
+        
+        wp_send_json_success(array(
+            'filename' => $unique_filename,
+            'url' => $file_url,
+            'path' => $file_path
+        ));
+    } else {
+        error_log('XPSocial: Failed to upload audio file');
+        wp_send_json_error('Failed to save audio file');
+    }
+}
+
+/**
+ * Get SaveData logs for monitoring
+ * 
+ * @param string $email Optional email to filter logs
+ * @param int $limit Number of logs to return (default: 50)
+ * @return array Array of SaveData logs
+ */
+function get_savedata_logs($email = '', $limit = 50) {
+    $logs = get_option('xpsocial_savedata_logs', array());
+    
+    if (!empty($email)) {
+        $logs = array_filter($logs, function($log) use ($email) {
+            return $log['email'] === $email;
+        });
+    }
+    
+    // Sort by timestamp (newest first)
+    usort($logs, function($a, $b) {
+        return strtotime($b['timestamp']) - strtotime($a['timestamp']);
+    });
+    
+    return array_slice($logs, 0, $limit);
+}
+
+/**
+ * Get SaveData statistics
+ * 
+ * @return array Statistics about SaveData calls
+ */
+function get_savedata_stats() {
+    $logs = get_option('xpsocial_savedata_logs', array());
+    
+    $total_calls = count($logs);
+    $successful_calls = count(array_filter($logs, function($log) {
+        return $log['success'];
+    }));
+    $failed_calls = $total_calls - $successful_calls;
+    
+    return array(
+        'total_calls' => $total_calls,
+        'successful_calls' => $successful_calls,
+        'failed_calls' => $failed_calls,
+        'success_rate' => $total_calls > 0 ? round(($successful_calls / $total_calls) * 100, 2) : 0
+    );
+}
 
 function send_data_to_fifco_optimized($data) {
     $endpoint = get_option('fifco_api_url');
@@ -487,8 +728,8 @@ function send_data_to_fifco_optimized($data) {
             "Province" => $data['provincia'],
             "Country" => $country,
             "UserRegisterSocial" => $data['sn'],
-            "CaptureDate" => date('d/m/Y'),
-            "ModifiedDate" => date('d/m/Y'),
+            "CaptureDate" => get_costa_rica_datetime('d/m/Y H:i:s'),
+            "ModifiedDate" => get_costa_rica_datetime('d/m/Y H:i:s'),
             "PoliticasPrivacidad" => $politicas_privacidad,
             "AceptaComunicaciones" => $acepta_comunicaciones,
             "Source" => $source
@@ -664,7 +905,6 @@ function handle_file_upload($file, $field_type, $field_name) {
     $file_type = wp_check_filetype($file['name'], $allowed_types);
     
     if (!$file_type['type']) {
-        error_log('XPSocial: Invalid file type for ' . $field_name . ': ' . $file['name']);
         return false;
     }
     
@@ -705,7 +945,8 @@ function get_allowed_file_types($field_type) {
                 'wav' => 'audio/wav',
                 'ogg' => 'audio/ogg',
                 'm4a' => 'audio/mp4',
-                'aac' => 'audio/aac'
+                'aac' => 'audio/aac',
+                'webm' => 'audio/webm'
             );
         case 'image':
             return array(
@@ -726,3 +967,156 @@ function get_allowed_file_types($field_type) {
             );
     }
 }
+
+/**
+ * Validar archivos subidos según la configuración del formulario
+ */
+function validate_uploaded_files($form_config, $uploaded_files) {
+    $errors = array();
+    
+    if (empty($form_config) || empty($uploaded_files)) {
+        return $errors;
+    }
+    
+    // Crear un mapa de configuraciones por campo
+    $field_configs = array();
+    if (!empty($form_config['dynamic_fields'])) {
+        foreach ($form_config['dynamic_fields'] as $field) {
+            $field_name = 'dynamic_' . $field['name'];
+            $field_configs[$field_name] = $field;
+        }
+    }
+    
+    foreach ($uploaded_files as $field_name => $file_info) {
+        if (!isset($file_info['error']) || $file_info['error'] !== UPLOAD_ERR_OK) {
+            continue; // Skip files with upload errors
+        }
+        
+        // Obtener configuración específica del campo
+        $field_config = isset($field_configs[$field_name]) ? $field_configs[$field_name] : null;
+        
+        if (!$field_config) {
+            continue; // Skip if no field configuration found
+        }
+        
+        $file_extension = strtolower(pathinfo($file_info['name'], PATHINFO_EXTENSION));
+        $file_size = $file_info['size'];
+        $file_type = $file_info['type'];
+        
+        // Validar formato permitido
+        $format_error = validate_file_format_by_field($file_extension, $field_config);
+        if ($format_error) {
+            $errors[$field_name] = $format_error;
+            continue;
+        }
+        
+        // Validar tamaño
+        $size_error = validate_file_size_by_field($file_size, $field_config);
+        if ($size_error) {
+            $errors[$field_name] = $size_error;
+            continue;
+        }
+        
+        // Validación de duración eliminada por problemas de compatibilidad
+    }
+    
+    return $errors;
+}
+
+/**
+ * Determinar la categoría del archivo basado en extensión y tipo MIME
+ */
+function determine_file_category($extension, $mime_type) {
+    $audio_extensions = ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'flac'];
+    $video_extensions = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'];
+    $image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
+    
+    if (in_array($extension, $audio_extensions) || strpos($mime_type, 'audio/') === 0) {
+        return 'audio';
+    } elseif (in_array($extension, $video_extensions) || strpos($mime_type, 'video/') === 0) {
+        return 'video';
+    } elseif (in_array($extension, $image_extensions) || strpos($mime_type, 'image/') === 0) {
+        return 'image';
+    } else {
+        return 'file';
+    }
+}
+
+/**
+ * Validar formato de archivo por campo
+ */
+function validate_file_format_by_field($extension, $field_config) {
+    $allowed_formats = array();
+    
+    // Obtener formatos permitidos del campo
+    if (!empty($field_config['allowed_formats'])) {
+        $allowed_formats = explode(',', $field_config['allowed_formats']);
+    } else {
+        // Usar valores por defecto si no están configurados
+        switch ($field_config['type']) {
+            case 'audio':
+                $allowed_formats = ['mp3', 'wav', 'm4a'];
+                break;
+            case 'video':
+                $allowed_formats = ['mp4', 'avi', 'mov'];
+                break;
+            case 'image':
+                $allowed_formats = ['jpg', 'jpeg', 'png', 'gif'];
+                break;
+            case 'file':
+                $allowed_formats = ['pdf', 'doc', 'docx', 'txt'];
+                break;
+        }
+    }
+    
+    // Limpiar espacios en blanco
+    $allowed_formats = array_map('trim', $allowed_formats);
+    
+    if (!in_array($extension, $allowed_formats)) {
+        return "Formato de archivo no permitido. Formatos permitidos: " . implode(', ', $allowed_formats);
+    }
+    
+    return null;
+}
+
+/**
+ * Validar tamaño de archivo por campo
+ */
+function validate_file_size_by_field($file_size, $field_config) {
+    $max_size_mb = 0;
+    
+    // Obtener tamaño máximo del campo
+    if (!empty($field_config['max_size_mb'])) {
+        $max_size_mb = intval($field_config['max_size_mb']);
+    } else {
+        // Usar valores por defecto si no están configurados
+        switch ($field_config['type']) {
+            case 'image':
+                $max_size_mb = 5;
+                break;
+            case 'video':
+                $max_size_mb = 50;
+                break;
+            case 'audio':
+            case 'file':
+            default:
+                $max_size_mb = 10;
+                break;
+        }
+    }
+    
+    $max_size_bytes = $max_size_mb * 1024 * 1024;
+    
+    if ($file_size > $max_size_bytes) {
+        $file_size_mb = round($file_size / 1024 / 1024, 2);
+        return "El archivo es demasiado grande. Tamaño máximo permitido: {$max_size_mb}MB. Tamaño del archivo: {$file_size_mb}MB";
+    }
+    
+    return null;
+}
+
+// Función de validación de duración eliminada por problemas de compatibilidad
+
+// Función get_media_duration eliminada por problemas de compatibilidad
+
+// Función get_mp3_duration eliminada por problemas de compatibilidad
