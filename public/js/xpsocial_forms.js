@@ -119,7 +119,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 
                 countries.forEach((country) => {
                     let option = document.createElement("option");
-                    option.value = country.country_id;
+                    option.value = country.name;
                     option.text = country.emoji + " " + country.name;
                     // Si solo hay un país, marcarlo como seleccionado
                     if (shouldAutoSelect) {

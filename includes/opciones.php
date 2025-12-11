@@ -1114,7 +1114,6 @@ function allcountries()
     return $countries;
 }
 
-<<<<<<< HEAD
 /**
  * Página de administración para actualizaciones
  */
@@ -1233,5 +1232,3 @@ function xpsocial_updates_options() {
     </style>
     <?php
 }
-=======
->>>>>>> b298d82 (audios funcionan)

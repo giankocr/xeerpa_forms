@@ -228,7 +228,6 @@ class Xpsocial_login
         return $this->version;
     }
 
-<<<<<<< HEAD
     /**
      * Initialize Git Updater
      *
@@ -239,6 +238,4 @@ class Xpsocial_login
         $plugin_file = plugin_basename(dirname(__FILE__) . '/../xpsocial_login.php');
         new Xpsocial_Git_Updater(plugin_dir_path(dirname(__FILE__)) . '../' . $plugin_file);
     }
-=======
->>>>>>> b298d82 (audios funcionan)
 }

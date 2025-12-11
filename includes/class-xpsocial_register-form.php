@@ -39,6 +39,11 @@ add_action('wp_ajax_nopriv_xpsocial_register_form', 'after_submission_xeerpa');
 
 function after_submission_xeerpa()
 {
+    // Start output buffering to catch any unexpected output
+    if (!ob_get_level()) {
+        ob_start();
+    }
+    
     // Verificar nonce CSRF para seguridad
     $nonce = $_POST['register_form_nonce'] ?? '';
     
@@ -306,19 +311,34 @@ function after_submission_xeerpa()
         
         // Safely get country name with proper error checking
         $country_name = $country_id; // Default to original country ID
-        if (!is_wp_error($country_data) && 
-            isset($country_data->data) && 
-            is_array($country_data->data) && 
-            !empty($country_data->data) && 
-            isset($country_data->data[0]['name'])) {
-            $country_name = $country_data->data[0]['name'];
+        if (!is_wp_error($country_data)) {
+            // Handle WP_REST_Response object
+            $data = null;
+            if (is_a($country_data, 'WP_REST_Response')) {
+                $data = $country_data->get_data();
+            } elseif (is_array($country_data)) {
+                $data = $country_data;
+            } elseif (is_object($country_data) && isset($country_data->data)) {
+                $data = $country_data->data;
+            }
+            
+            // Extract country name from data structure
+            if (is_array($data) && isset($data['data']) && is_array($data['data']) && !empty($data['data'])) {
+                if (isset($data['data'][0]['name'])) {
+                    $country_name = $data['data'][0]['name'];
+                }
+            } elseif (is_array($data) && isset($data[0]) && is_array($data[0]) && isset($data[0]['name'])) {
+                // Handle case where data is directly an array
+                $country_name = $data[0]['name'];
+            }
+            
+            // Log if we couldn't extract the country name
+            if ($country_name === $country_id) {
+                error_log("XPSocial: Could not extract country name for country ID: " . $country_id . ". Data structure: " . print_r($data, true));
+            }
         } else {
             // Log error for debugging but continue with registration
-            if (is_wp_error($country_data)) {
-                error_log("XPSocial: Country data error - " . $country_data->get_error_message());
-            } else {
-                error_log("XPSocial: Invalid country data structure for country ID: " . $country_id);
-            }
+            error_log("XPSocial: Country data error - " . $country_data->get_error_message());
         }
 
         // User metadata and login functionality removed - no longer managing WordPress users
@@ -385,6 +405,9 @@ function after_submission_xeerpa()
             
             if ($lead_id) {
                 error_log("XPSocial: Lead saved successfully with ID: " . $lead_id);
+                
+                // Trigger action for other plugins (like ruleta de la suerte)
+                do_action('xpsocial_lead_saved', $lead_id, $lead_data);
             } else {
                 error_log("XPSocial: Failed to save lead");
             }
@@ -396,27 +419,44 @@ function after_submission_xeerpa()
             $redirect_url = $form_config['redirect_url'];
         }
         
+        // Allow other plugins to modify redirect URL (e.g., ruleta de la suerte)
+        // Use output buffering to catch any unexpected output from filters
+        ob_start();
+        $redirect_url = apply_filters('xpsocial_redirect_url', $redirect_url, $lead_data);
+        $filter_output = ob_get_clean();
+        
+        // If filter produced output, log it but don't include it in response
+        if (!empty($filter_output)) {
+            error_log('XPSocial: Filter output detected (should be empty): ' . substr($filter_output, 0, 200));
+        }
+        
+        // Ensure we send clean JSON response
+        // Clear any previous output
+        if (ob_get_level()) {
+            ob_clean();
+        }
+        
         if (!empty($redirect_url)) {
             // Validar que la URL de redirect sea segura
             $validated_redirect_url = esc_url_raw($redirect_url);
-            if (wp_http_validate_url($validated_redirect_url)) {
+            if (wp_http_validate_url($validated_redirect_url) || preg_match('/^\/[^\s]*$/', $validated_redirect_url)) {
                 // Return JSON response with redirect URL
-                header('Content-Type: application/json');
+                header('Content-Type: application/json; charset=utf-8');
                 http_response_code(200);
                 echo json_encode(array(
                     'success' => true,
                     'message' => 'Registro completado exitosamente',
                     'redirect' => $validated_redirect_url
-                ));
+                ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             } else {
                 // URL inválida, usar fallback
-                header('Content-Type: application/json');
+                header('Content-Type: application/json; charset=utf-8');
                 http_response_code(200);
                 echo json_encode(array(
                     'success' => true,
                     'message' => 'Registro completado exitosamente',
                     'success_html' => '<div class="xpsocial-success-message"><h3>¡Registro exitoso!</h3><p>Gracias por registrarte. Tu información ha sido guardada correctamente.</p></div>'
-                ));
+                ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             }
         } else {
             // No hay redirect configurado, mostrar mensaje de éxito HTML
@@ -427,13 +467,13 @@ function after_submission_xeerpa()
                 $success_html = '<div class="xpsocial-success-message"><h3>¡Registro exitoso!</h3><p>Gracias por registrarte. Tu información ha sido guardada correctamente.</p></div>';
             }
             
-            header('Content-Type: application/json');
+            header('Content-Type: application/json; charset=utf-8');
             http_response_code(200);
             echo json_encode(array(
                 'success' => true,
                 'message' => 'Registro completado exitosamente',
                 'success_html' => $success_html
-            ));
+            ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             error_log('XPSocial: Success response sent with HTML: ' . $success_html);
         }
          // Start background API calls asynchronously (non-blocking)
@@ -457,6 +497,11 @@ function after_submission_xeerpa()
         // Call background processing directly instead of using wp_schedule_single_event
         process_background_api_calls($user_data_array);
         error_log("XPSocial: Background API processing triggered for lead ID: " . $lead_id);
+        
+        // Clean any remaining output and exit
+        if (ob_get_level()) {
+            ob_end_flush();
+        }
         exit;
 
     }
